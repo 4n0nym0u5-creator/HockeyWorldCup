@@ -416,19 +416,67 @@ h3 { font-size: 26px; }
   inset: 0;
   background: rgba(3, 8, 6, 0.72);
   display: grid;
-  place-items: center;
-  padding: 20px;
+  place-items: end center;
+  padding: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
   z-index: 20;
+  overflow: hidden;
 }
 
 .modal {
   width: min(640px, 100%);
+  max-height: min(92dvh, 920px);
+  display: flex;
+  flex-direction: column;
   background: #10241c;
   border: 1px solid var(--line);
   border-radius: 24px;
-  padding: 22px;
   box-shadow: var(--shadow);
+  overflow: hidden;
 }
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--stroke);
+  flex: 0 0 auto;
+}
+
+.modal-body {
+  padding: 12px 16px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  flex: 1 1 auto;
+}
+
+.modal-teams {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 4px;
+}
+
+.close-x {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.06);
+  font-size: 28px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.watch-box { padding: 12px; margin-top: 16px; }
+.watch-list { display: grid; gap: 10px; margin-top: 8px; }
+.watch-list p { margin: 0; }
+.watch-list b { display: block; }
+.watch-list span { display: block; margin-top: 2px; font-size: 13px; opacity: 0.75; }
+.modal-facts { margin-top: 14px; }
+.modal-facts .team-fact { -webkit-line-clamp: 4; }
 
 .score-inputs {
   display: flex;
@@ -493,10 +541,25 @@ h3 { font-size: 26px; }
 }
 
 @media (max-width: 900px) {
+  .app { width: min(1240px, calc(100% - 20px)); padding-top: 14px; }
+  .hero { padding: 18px; }
   .hero-grid, .grid-2, .grid-3, .grid-5, .stat-row, .match {
     grid-template-columns: 1fr;
   }
-  .when { border: 0; text-align: left; }
+  .when { border: 0; text-align: left; padding-right: 0; }
   .topbar { flex-direction: column; }
+  .you-box { min-width: 0; width: 100%; }
   .score-box { text-align: left; }
+  .nav { gap: 6px; }
+  .nav button, .chip { padding: 8px 12px; font-size: 13px; }
+  .modal-back { place-items: end center; padding: 0; }
+  .modal {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 22px 22px 0 0;
+  }
+  .score-inputs { gap: 10px; margin: 14px 0; }
+  .score-inputs input { width: 64px; height: 64px; font-size: 36px; }
+  .actions { justify-content: stretch; }
+  .actions button { flex: 1 1 auto; }
 }

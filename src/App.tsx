@@ -616,65 +616,94 @@ function MatchModal({
   const status = matchStatus(match.kickoff);
   const clash = home && away && ownerOf(home.id)?.id !== ownerOf(away.id)?.id;
 
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
   return (
     <div className="modal-back" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <p className="eyebrow">{match.gender === "M" ? "Men" : "Women"} · {venues[match.venue].name}</p>
-        <h2>{match.label}</h2>
-        <p className="lede">{formatDateTime(match.kickoff)}</p>
-        <LocalNote iso={match.kickoff} />
-        {match.note && <p className="italic">{match.note}</p>}
-        {clash && <p className="badge clash" style={{ marginTop: 10 }}>Family clash</p>}
-
-        <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
-          <TeamMark team={home} big fact />
-          <TeamMark team={away} big fact />
-        </div>
-        {(home || away) && (
-          <div className="stack" style={{ marginTop: 14 }}>
-            {home?.facts.slice(1).map((item) => (
-              <p key={item} className="team-fact" style={{ WebkitLineClamp: 6 }}>{home.short}: {item}</p>
-            ))}
-            {away?.facts.slice(1).map((item) => (
-              <p key={item} className="team-fact" style={{ WebkitLineClamp: 6 }}>{away.short}: {item}</p>
-            ))}
+        <div className="modal-head">
+          <div>
+            <p className="eyebrow">{match.gender === "M" ? "Men" : "Women"} · {venues[match.venue].name}</p>
+            <h2>{match.label}</h2>
           </div>
-        )}
-
-        {home && away && (
-          <>
-            <div className="score-inputs">
-              <input inputMode="numeric" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} />
-              <span className="vs">SCORE</span>
-              <input inputMode="numeric" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} />
-            </div>
-            <div className="actions">
-              <button className="primary" onClick={() => onScore({ home: Number(homeScore) || 0, away: Number(awayScore) || 0 })}>
-                Save result
-              </button>
-              <button className="ghost" onClick={() => onTip(Number(homeScore) || 0, Number(awayScore) || 0)}>
-                Lock {members.find((m) => m.id === state.you)?.name}'s tip
-              </button>
-              {existing && <button className="ghost" onClick={() => onScore(undefined)}>Clear result</button>}
-            </div>
-            {yourTip && <p className="lede">Your tip: {yourTip.home}–{yourTip.away}</p>}
-            {status === "live" && <p className="badge live">Inside the live window — update as it happens</p>}
-          </>
-        )}
-
-        {home && (
-          <div className="card" style={{ padding: 12, marginTop: 16 }}>
-            <strong>Watch this</strong>
-            <p className="italic" style={{ margin: "6px 0 0" }}>{home.players[0]?.note} · {away?.players[0]?.note}</p>
-          </div>
-        )}
-
-        <div className="note-box" style={{ marginTop: 14 }}>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Family notes, pub bets, who fell asleep..." />
-          <button className="ghost" style={{ marginTop: 8 }} onClick={() => onNote(note)}>Save note</button>
+          <button className="close-x" onClick={onClose} aria-label="Close match">
+            ×
+          </button>
         </div>
-        <div className="actions" style={{ marginTop: 12 }}>
-          <button className="ghost" onClick={onClose}>Close</button>
+
+        <div className="modal-body">
+          <p className="lede">{formatDateTime(match.kickoff)}</p>
+          <LocalNote iso={match.kickoff} />
+          {match.note && <p className="italic">{match.note}</p>}
+          {clash && <p className="badge clash" style={{ marginTop: 10 }}>Family clash</p>}
+
+          <div className="modal-teams">
+            <TeamMark team={home} big />
+            <TeamMark team={away} big />
+          </div>
+
+          {home && away && (
+            <>
+              <div className="score-inputs">
+                <input inputMode="numeric" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} />
+                <span className="vs">SCORE</span>
+                <input inputMode="numeric" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} />
+              </div>
+              <div className="actions">
+                <button className="primary" onClick={() => onScore({ home: Number(homeScore) || 0, away: Number(awayScore) || 0 })}>
+                  Save result
+                </button>
+                <button className="ghost" onClick={() => onTip(Number(homeScore) || 0, Number(awayScore) || 0)}>
+                  Lock {members.find((m) => m.id === state.you)?.name}'s tip
+                </button>
+                {existing && <button className="ghost" onClick={() => onScore(undefined)}>Clear result</button>}
+              </div>
+              {yourTip && <p className="lede">Your tip: {yourTip.home}–{yourTip.away}</p>}
+              {status === "live" && <p className="badge live">Inside the live window — update as it happens</p>}
+            </>
+          )}
+
+          {(home || away) && (
+            <div className="card watch-box">
+              <strong>Watch this</strong>
+              <div className="watch-list">
+                {(home?.players ?? []).map((player) => (
+                  <p key={`h-${player.name}`}>
+                    <b>{home?.name} — {player.name}</b>
+                    <span>{player.role}. {player.note}</span>
+                  </p>
+                ))}
+                {(away?.players ?? []).map((player) => (
+                  <p key={`a-${player.name}`}>
+                    <b>{away?.name} — {player.name}</b>
+                    <span>{player.role}. {player.note}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(home?.facts.length || away?.facts.length) ? (
+            <div className="stack modal-facts">
+              {home?.facts.map((item) => (
+                <p key={item} className="team-fact">{home.short}: {item}</p>
+              ))}
+              {away?.facts.map((item) => (
+                <p key={item} className="team-fact">{away.short}: {item}</p>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="note-box">
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Family notes, pub bets, who fell asleep..." />
+            <button className="ghost" style={{ marginTop: 8 }} onClick={() => onNote(note)}>Save note</button>
+          </div>
         </div>
       </div>
     </div>
