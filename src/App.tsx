@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { tournamentFacts, watchTips } from "./data/facts";
 import { matches, venues } from "./data/matches";
 import { members } from "./data/members";
 import { teamById, teams } from "./data/teams";
 import type { FamilyMember, Match, MatchScore, MemberId } from "./data/types";
+import { canWriteLedger, mergeDocs, pullLedger, pushLedger, type CloudStatus } from "./lib/cloud";
 import { ownerOf } from "./lib/owners";
 import { scoreboard } from "./lib/scoring";
 import { poolTable } from "./lib/standings";
-import { exportState, importState, loadState, saveState, type AppState } from "./lib/storage";
+import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
 import { Flag, LocalNote, MatchCard, TeamMark } from "./ui";
 
@@ -29,13 +30,50 @@ export function App() {
   const [tab, setTab] = useState<Tab>("today");
   const [openId, setOpenId] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
-  const [share, setShare] = useState("");
+  const [cloud, setCloud] = useState<CloudStatus>("offline");
+  const skipPush = useRef(true);
 
   useEffect(() => saveState(state), [state]);
   useEffect(() => {
     const id = setInterval(() => setTick((n) => n + 1), 30_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hydrate = async () => {
+      try {
+        const remote = await pullLedger();
+        if (!remote || cancelled) return;
+        skipPush.current = true;
+        setState((current) => docToState(mergeDocs(stateToDoc(current), remote), current.you));
+        setCloud("live");
+      } catch {
+        if (!cancelled) setCloud("offline");
+      }
+    };
+    void hydrate();
+    const id = setInterval(() => void hydrate(), 12_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (skipPush.current) {
+      skipPush.current = false;
+      return;
+    }
+    if (!canWriteLedger()) return;
+    const id = window.setTimeout(() => {
+      setCloud("saving");
+      void pushLedger(stateToDoc(state))
+        .then(() => setCloud("live"))
+        .catch(() => setCloud("offline"));
+    }, 700);
+    return () => window.clearTimeout(id);
+  }, [state.scores, state.predictions, state.notes, state.noteTimes]);
 
   const you = members.find((m) => m.id === state.you)!;
   const board = useMemo(
@@ -70,6 +108,12 @@ export function App() {
           <div style={{ marginTop: 8, fontSize: 13, opacity: 0.7 }}>
             Times follow this device. Pitch clocks are CEST.
           </div>
+          <div className={`live-dot ${cloud === "offline" ? "off" : cloud === "saving" ? "saving" : ""}`}>
+            <i />
+            {cloud === "live" && "Live kitchen · shared with everyone"}
+            {cloud === "saving" && "Live kitchen · saving…"}
+            {cloud === "offline" && (canWriteLedger() ? "Live kitchen · retrying" : "Live kitchen · viewing the shared ladder")}
+          </div>
         </div>
       </header>
 
@@ -88,7 +132,7 @@ export function App() {
       {tab === "clashes" && <Clashes state={state} onOpen={setOpenId} />}
       {tab === "pools" && <Pools scores={state.scores} />}
       {tab === "facts" && <Facts />}
-      {tab === "rules" && <Rules share={share} setShare={setShare} state={state} patch={patch} />}
+      {tab === "rules" && <Rules cloud={cloud} />}
 
       {open && (
         <MatchModal
@@ -97,7 +141,7 @@ export function App() {
           onClose={() => setOpenId(null)}
           onScore={(score) => {
             const scores = { ...state.scores };
-            if (score) scores[open.id] = score;
+            if (score) scores[open.id] = { ...score, at: Date.now(), by: state.you };
             else delete scores[open.id];
             patch({ scores });
           }}
@@ -106,11 +150,14 @@ export function App() {
             patch({
               predictions: {
                 ...state.predictions,
-                [open.id]: [...current, { memberId: state.you, home, away }],
+                [open.id]: [...current, { memberId: state.you, home, away, at: Date.now() }],
               },
             });
           }}
-          onNote={(note) => patch({ notes: { ...state.notes, [open.id]: note } })}
+          onNote={(note) => patch({
+            notes: { ...state.notes, [open.id]: note },
+            noteTimes: { ...state.noteTimes, [open.id]: Date.now() },
+          })}
         />
       )}
     </div>
@@ -498,17 +545,8 @@ function Facts() {
   );
 }
 
-function Rules({
-  share,
-  setShare,
-  state,
-  patch,
-}: {
-  share: string;
-  setShare: (v: string) => void;
-  state: AppState;
-  patch: (p: Partial<AppState>) => void;
-}) {
+function Rules({ cloud }: { cloud: CloudStatus }) {
+  const [token, setToken] = useState(() => localStorage.getItem("family-cup-ledger-token") ?? "");
   return (
     <div className="grid-2">
       <div className="card" style={{ padding: 20 }}>
@@ -524,19 +562,29 @@ function Rules({
         <p className="italic">Andrew and Hugo have seven teams because 32 does not divide by five. Their extras are the leftover lower-ranked sides, so the quality split stays honest.</p>
       </div>
       <div className="share card">
-        <h3>Share the kitchen ledger</h3>
-        <p className="lede">One person can enter scores, then copy this code into everyone else's phone so the ladder matches.</p>
-        <button className="primary" onClick={() => navigator.clipboard.writeText(exportState(state))}>Copy sync code</button>
-        <input value={share} onChange={(e) => setShare(e.target.value)} placeholder="Paste a sync code" />
+        <h3>Live kitchen</h3>
+        <p className="lede">
+          Scores, tips and notes live in a shared family ledger. Open the site on any phone and you
+          all see the same ladder — no codes to copy. Status: {cloud === "live" ? "connected" : cloud === "saving" ? "saving" : "viewing"}.
+        </p>
+        <p className="italic">
+          If saving ever fails on a new phone, paste the family ledger key once. Andrew can send it
+          in the chat. Everyone else can ignore this box.
+        </p>
+        <input
+          type="password"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="Family ledger key"
+        />
         <button
           className="ghost"
           onClick={() => {
-            const next = importState(share.trim());
-            if (next) patch(next);
-            else alert("That code did not look right.");
+            localStorage.setItem("family-cup-ledger-token", token.trim());
+            window.location.reload();
           }}
         >
-          Import code
+          Save key on this phone
         </button>
       </div>
     </div>
@@ -579,9 +627,19 @@ function MatchModal({
         {clash && <p className="badge clash" style={{ marginTop: 10 }}>Family clash</p>}
 
         <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
-          <TeamMark team={home} big />
-          <TeamMark team={away} big />
+          <TeamMark team={home} big fact />
+          <TeamMark team={away} big fact />
         </div>
+        {(home || away) && (
+          <div className="stack" style={{ marginTop: 14 }}>
+            {home?.facts.slice(1).map((item) => (
+              <p key={item} className="team-fact" style={{ WebkitLineClamp: 6 }}>{home.short}: {item}</p>
+            ))}
+            {away?.facts.slice(1).map((item) => (
+              <p key={item} className="team-fact" style={{ WebkitLineClamp: 6 }}>{away.short}: {item}</p>
+            ))}
+          </div>
+        )}
 
         {home && away && (
           <>

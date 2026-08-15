@@ -57,10 +57,13 @@ export interface Match {
 export interface MatchScore {
   home: number;
   away: number;
+  at?: number;
+  by?: MemberId;
 }
 
 export interface Prediction {
   memberId: MemberId;
   home: number;
   away: number;
+  at?: number;
 }

@@ -8,7 +8,7 @@ export function Flag({ code, alt }: { code: string; alt: string }) {
   return <img className="flag" src={`https://flagcdn.com/w80/${code}.png`} alt={alt} />;
 }
 
-export function TeamMark({ team, big }: { team?: Team; big?: boolean }) {
+export function TeamMark({ team, big, fact }: { team?: Team; big?: boolean; fact?: boolean }) {
   if (!team) {
     return (
       <div className="side">
@@ -30,6 +30,12 @@ export function TeamMark({ team, big }: { team?: Team; big?: boolean }) {
         <div style={{ fontSize: 12, opacity: 0.65 }}>
           {team.gender === "M" ? "Men" : "Women"} · WR {team.rank} · {owner?.name ?? "Unowned"}
         </div>
+        {fact && (
+          <p className="team-fact">
+            {team.facts[0]}
+            {team.players[0] && ` Watch ${team.players[0].name}: ${team.players[0].note}`}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -71,8 +77,8 @@ export function MatchCard({
           {left && status === "upcoming" && <span className="badge">{left}</span>}
         </div>
         <div className="sides">
-          <TeamMark team={home} />
-          <TeamMark team={away} />
+          <TeamMark team={home} fact />
+          <TeamMark team={away} fact />
         </div>
         {match.note && <p className="italic" style={{ margin: "10px 0 0", fontSize: 14 }}>{match.note}</p>}
       </div>
