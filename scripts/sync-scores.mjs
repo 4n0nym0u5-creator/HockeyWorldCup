@@ -285,6 +285,17 @@ async function main() {
 
   doc.updatedAt = Date.now();
   writeFileSync(ledgerPath, `${JSON.stringify(doc, null, 2)}\n`);
+  if (changed) {
+    try {
+      await fetch(KITCHEN, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Title: "official-scores" },
+        body: JSON.stringify({ kind: "scores", scores: doc.scores, at: doc.updatedAt }),
+      });
+    } catch (error) {
+      console.error("Score broadcast failed:", error.message);
+    }
+  }
   console.log(`Wrote ${changed} official score(s), ${tipUpdates ? "new tips" : "no new tips"}, ${noteUpdates ? "new notes" : "no new notes"} to cloud/state.json`);
 }
 

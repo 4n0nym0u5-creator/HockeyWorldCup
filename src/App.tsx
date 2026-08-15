@@ -64,7 +64,8 @@ export function App() {
       try {
         const remote = await pullLedger();
         if (cancelled) return;
-        applyIncoming(remote ?? emptyDoc());
+        if (remote) applyIncoming(remote);
+        else if (!cancelled) setCloud("offline");
       } catch {
         if (!cancelled) setCloud("offline");
       }
@@ -74,6 +75,7 @@ export function App() {
         if (cancelled) return;
         applyIncoming({
           ...emptyDoc(),
+          scores: kitchen.scores,
           notes: kitchen.notes,
           predictions: kitchen.predictions,
         });

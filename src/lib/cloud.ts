@@ -4,6 +4,12 @@ const REPO = "4n0nym0u5-creator/HockeyWorldCup";
 const PATH = "cloud/state.json";
 const RAW = `https://raw.githubusercontent.com/${REPO}/main/${PATH}`;
 const API = `https://api.github.com/repos/${REPO}/contents/${PATH}`;
+const LEDGER_URLS = [
+  () => `${RAW}?t=${Date.now()}`,
+  () => `https://media.githubusercontent.com/media/${REPO}/main/${PATH}?t=${Date.now()}`,
+  () => `https://github.com/${REPO}/raw/refs/heads/main/${PATH}?t=${Date.now()}`,
+  () => `${API}?ref=main&t=${Date.now()}`,
+];
 const KITCHEN = "https://ntfy.sh/fih-family-cup-2026-kitchen-notes";
 const MEMBERS: MemberId[] = ["andrew", "nicole", "georgia", "emily", "hugo"];
 export const MAX_NOTES_PER_MATCH = 100;
@@ -130,14 +136,50 @@ export function normalizeNotes(raw: unknown): Record<string, MatchNote[]> {
   return notes;
 }
 
-export async function pullLedger(): Promise<CloudDoc | null> {
-  const res = await fetch(`${RAW}?t=${Date.now()}`, {
-    cache: "no-store",
-    headers: { "Cache-Control": "no-cache" },
-  });
+function decodeBase64Utf8(value: string) {
+  const binary = atob(value.replace(/\n/g, ""));
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+async function readLedgerResponse(res: Response): Promise<CloudDoc | null> {
   if (!res.ok) return null;
-  const doc = (await res.json()) as CloudDoc;
-  return { ...doc, notes: normalizeNotes(doc.notes), predictions: mergePredictionMaps(doc.predictions) };
+  const data = (await res.json()) as CloudDoc & { content?: string; encoding?: string };
+  if (data?.scores || data?.notes || data?.predictions) return data;
+  if (data?.content) {
+    const json = data.encoding === "base64" ? decodeBase64Utf8(data.content) : data.content;
+    return JSON.parse(json) as CloudDoc;
+  }
+  return null;
+}
+
+export async function pullLedger(): Promise<CloudDoc | null> {
+  for (const url of LEDGER_URLS) {
+    try {
+      const href = url();
+      const isApi = href.startsWith("https://api.github.com");
+      const res = await fetch(href, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache",
+          Accept: isApi
+            ? "application/vnd.github.raw+json, application/vnd.github+json"
+            : "application/json",
+        },
+      });
+      const doc = await readLedgerResponse(res);
+      if (!doc || typeof doc !== "object") continue;
+      return {
+        ...doc,
+        scores: doc.scores ?? {},
+        notes: normalizeNotes(doc.notes),
+        predictions: mergePredictionMaps(doc.predictions),
+      };
+    } catch {
+      // try the next host — iPhones often block raw.githubusercontent.com
+    }
+  }
+  return null;
 }
 
 type KitchenPayload = {
@@ -150,9 +192,33 @@ type KitchenPayload = {
   home?: number;
   away?: number;
   at?: number;
+  phase?: MatchScore["phase"];
+  source?: MatchScore["source"];
+  status?: string;
+  htHome?: number;
+  htAway?: number;
+  scores?: Record<string, StampedScore>;
 };
 
 export function parseKitchenPayload(payload: KitchenPayload) {
+  if (payload.kind === "scores" && payload.scores && typeof payload.scores === "object") {
+    return { scores: payload.scores };
+  }
+  if (payload.kind === "score" && payload.matchId && Number.isFinite(Number(payload.home))) {
+    return {
+      matchId: String(payload.matchId),
+      score: {
+        home: Number(payload.home),
+        away: Number(payload.away),
+        htHome: payload.htHome,
+        htAway: payload.htAway,
+        phase: payload.phase ?? "ft",
+        source: payload.source ?? "fih",
+        status: payload.status,
+        at: Number(payload.at) || Date.now(),
+      } satisfies StampedScore,
+    };
+  }
   const memberId = asMember(payload.by ?? payload.memberId);
   const matchId = String(payload.matchId ?? "");
   if (!memberId || !matchId) return null;
@@ -179,6 +245,24 @@ export function parseKitchenPayload(payload: KitchenPayload) {
 export function applyKitchenPayload(doc: CloudDoc, payload: KitchenPayload): CloudDoc {
   const parsed = parseKitchenPayload(payload);
   if (!parsed) return doc;
+  if (parsed.scores) {
+    const scores = { ...doc.scores };
+    for (const [id, score] of Object.entries(parsed.scores)) {
+      const incoming = { ...score, at: score.at ?? Date.now() };
+      scores[id] = scores[id] ? pickScore(scores[id], incoming) : incoming;
+    }
+    return { ...doc, scores };
+  }
+  if (parsed.score && parsed.matchId) {
+    const current = doc.scores[parsed.matchId];
+    return {
+      ...doc,
+      scores: {
+        ...doc.scores,
+        [parsed.matchId]: current ? pickScore(current, parsed.score) : parsed.score,
+      },
+    };
+  }
   if (parsed.note) {
     return {
       ...doc,
@@ -226,9 +310,11 @@ export function subscribeKitchen(onPayload: (payload: KitchenPayload) => void) {
 export async function pullKitchen(): Promise<{
   notes: Record<string, MatchNote[]>;
   predictions: Record<string, StampedPrediction[]>;
+  scores: Record<string, StampedScore>;
 }> {
   const notes: Record<string, MatchNote[]> = {};
   const predictions: Record<string, StampedPrediction[]> = {};
+  const scores: Record<string, StampedScore> = {};
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 4000);
@@ -236,7 +322,7 @@ export async function pullKitchen(): Promise<{
       cache: "no-store",
       signal: controller.signal,
     }).finally(() => clearTimeout(timer));
-    if (!res.ok) return { notes, predictions };
+    if (!res.ok) return { notes, predictions, scores };
     const lines = (await res.text()).split("\n").map((line) => line.trim()).filter(Boolean);
     for (const line of lines) {
       try {
@@ -245,6 +331,17 @@ export async function pullKitchen(): Promise<{
         if (!payload.at && event.time) payload.at = event.time * 1000;
         const parsed = parseKitchenPayload(payload);
         if (!parsed) continue;
+        if (parsed.scores) {
+          for (const [id, score] of Object.entries(parsed.scores)) {
+            const incoming = { ...score, at: score.at ?? Date.now() };
+            scores[id] = scores[id] ? pickScore(scores[id], incoming) : incoming;
+          }
+        }
+        if (parsed.score && parsed.matchId) {
+          scores[parsed.matchId] = scores[parsed.matchId]
+            ? pickScore(scores[parsed.matchId], parsed.score)
+            : parsed.score;
+        }
         if (parsed.note) notes[parsed.matchId] = mergeNoteLists(notes[parsed.matchId], [parsed.note]);
         if (parsed.tip) predictions[parsed.matchId] = mergePredictionLists(predictions[parsed.matchId], [parsed.tip]);
       } catch {
@@ -254,7 +351,7 @@ export async function pullKitchen(): Promise<{
   } catch {
     // live kitchen is a bonus; the ledger still holds
   }
-  return { notes, predictions };
+  return { notes, predictions, scores };
 }
 
 export async function postKitchenNote(matchId: string, note: MatchNote) {
