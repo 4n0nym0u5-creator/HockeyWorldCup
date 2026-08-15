@@ -2,7 +2,7 @@ import { useState } from "react";
 import { venues } from "./data/matches";
 import { teamById } from "./data/teams";
 import type { Match, MatchNote, MatchScore, Prediction, Team } from "./data/types";
-import { matchOutcome } from "./lib/outcome";
+import { matchOutcome, tipOutcome } from "./lib/outcome";
 import { ownerOf } from "./lib/owners";
 import { phaseLabel } from "./lib/scorePhase";
 import { countdown, formatDate, formatTime, matchStatus, venueZone } from "./lib/time";
@@ -122,6 +122,7 @@ export function MatchCard({
         </div>
         {match.note && <p className="italic" style={{ margin: "10px 0 0", fontSize: 14 }}>{match.note}</p>}
         <WinnerCallout match={match} score={score} />
+        <TipCallout score={score} tips={familyTips} />
         {familyNotes.length > 0 && (
           <div className="card-notes">
             {familyNotes.slice(-3).map((item) => (
@@ -173,6 +174,20 @@ export function WinnerCallout({ match, score }: { match: Match; score?: MatchSco
   return (
     <div
       className={`winner-callout${outcome.kind === "win" ? " win" : " draw"}`}
+      style={outcome.owner ? { borderColor: outcome.owner.color, background: `${outcome.owner.color}22` } : undefined}
+    >
+      <strong>{outcome.headline}</strong>
+      <span>{outcome.detail}</span>
+    </div>
+  );
+}
+
+export function TipCallout({ score, tips }: { score?: MatchScore; tips?: Prediction[] }) {
+  const outcome = tipOutcome(score, tips);
+  if (!outcome) return null;
+  return (
+    <div
+      className="winner-callout tip-callout"
       style={outcome.owner ? { borderColor: outcome.owner.color, background: `${outcome.owner.color}22` } : undefined}
     >
       <strong>{outcome.headline}</strong>

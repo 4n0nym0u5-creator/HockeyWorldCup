@@ -379,6 +379,7 @@ h3 { font-size: 26px; }
 }
 .winner-callout strong { display: block; font-size: 16px; }
 .winner-callout span { display: block; margin-top: 3px; font-size: 13px; opacity: 0.75; }
+.tip-callout { margin-top: 8px; }
 
 .vs {
   opacity: 0.45;

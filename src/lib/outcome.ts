@@ -1,7 +1,9 @@
+import { members } from "../data/members";
 import { teamById } from "../data/teams";
-import type { Match, MatchScore } from "../data/types";
+import type { Match, MatchScore, Prediction } from "../data/types";
 import { ownerOf } from "./owners";
-import { phaseLabel } from "./scorePhase";
+import { predictionPoints } from "./scoring";
+import { isFullTime, phaseLabel } from "./scorePhase";
 
 export function matchOutcome(match: Match, score?: MatchScore) {
   if (!score) return null;
@@ -42,5 +44,42 @@ export function matchOutcome(match: Match, score?: MatchScore) {
         : team?.name ?? "",
     owner,
     phase: phaseLabel(score),
+  };
+}
+
+export function tipOutcome(score?: MatchScore, tips?: Prediction[]) {
+  if (!score || !isFullTime(score) || !tips?.length) return null;
+  const ranked = tips.flatMap((tip) => {
+    const member = members.find((item) => item.id === tip.memberId);
+    if (!member) return [];
+    return [{ tip, member, points: predictionPoints(score, tip) }];
+  });
+  if (!ranked.length) return null;
+  const best = Math.max(...ranked.map((row) => row.points));
+  if (best <= 0) {
+    return {
+      kind: "none" as const,
+      headline: "No one had the tips",
+      detail: "The kitchen missed this one",
+      owner: null,
+    };
+  }
+  const winners = ranked.filter((row) => row.points === best);
+  if (winners.length === 1) {
+    const winner = winners[0];
+    return {
+      kind: "win" as const,
+      headline: `${winner.member.emoji} ${winner.member.name} won the tips`,
+      detail: best === 3
+        ? `Exact ${winner.tip.home}–${winner.tip.away}`
+        : `Correct result ${winner.tip.home}–${winner.tip.away}`,
+      owner: winner.member,
+    };
+  }
+  return {
+    kind: "split" as const,
+    headline: `${winners.map((row) => `${row.member.emoji} ${row.member.name}`).join(" and ")} split the tips`,
+    detail: best === 3 ? "Exact score" : "Correct result",
+    owner: null,
   };
 }

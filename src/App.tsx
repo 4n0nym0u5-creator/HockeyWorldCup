@@ -23,7 +23,7 @@ import { poolTable } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
 import { isFullTime } from "./lib/scorePhase";
-import { Flag, LocalNote, MatchCard, OfficialScore, TeamMark, WinnerCallout } from "./ui";
+import { Flag, LocalNote, MatchCard, OfficialScore, TeamMark, TipCallout, WinnerCallout } from "./ui";
 
 type Tab = "today" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
 
@@ -720,6 +720,7 @@ function MatchModal({
 
           <OfficialScore match={match} score={existing} big />
           <WinnerCallout match={match} score={existing} />
+          <TipCallout score={existing} tips={matchTips} />
           {existing?.status && <p className="lede">{existing.source === "fih" ? "Official FIH" : "Family"} · {existing.status}</p>}
 
           {home && away && (
