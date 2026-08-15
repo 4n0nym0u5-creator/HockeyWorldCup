@@ -129,7 +129,7 @@ export function MatchCard({
         )}
         {match.note && <p className="italic" style={{ margin: "10px 0 0", fontSize: 14 }}>{match.note}</p>}
         <WinnerCallout match={match} score={score} />
-        <TipCallout match={match} score={score} tips={familyTips} />
+        <TipCallout score={score} tips={familyTips} />
         {familyNotes.length > 0 && (
           <div className="card-notes">
             {familyNotes.slice(-3).map((item) => (
@@ -188,8 +188,8 @@ export function WinnerCallout({ match, score }: { match: Match; score?: MatchSco
   );
 }
 
-export function TipCallout({ match, score, tips }: { match?: Match; score?: MatchScore; tips?: Prediction[] }) {
-  const outcome = tipOutcome(score, tips, match);
+export function TipCallout({ score, tips }: { score?: MatchScore; tips?: Prediction[] }) {
+  const outcome = tipOutcome(score, tips);
   if (!outcome) return null;
   return (
     <div

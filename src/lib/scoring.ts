@@ -54,14 +54,6 @@ export function matchOwnerPoints(match: Match, score: MatchScore, teamId: string
   return pts;
 }
 
-const TIP_GRACE_MS = 60_000;
-
-export function tipIsOnTime(match: Match, tip: Prediction) {
-  const at = Number(tip.at) || 0;
-  if (!at) return true;
-  return at < new Date(match.kickoff).getTime() + TIP_GRACE_MS;
-}
-
 export function predictionPoints(score: MatchScore, tip: Prediction) {
   const home = Number(score.home);
   const away = Number(score.away);
@@ -101,13 +93,13 @@ export function scoreboard(
     for (const match of matches) {
       const raw = scores[match.id];
       const tip = (predictions[match.id] ?? []).find((item) => item.memberId === member.id);
-      if (!raw || !tip || !isFullTime(raw) || !tipIsOnTime(match, tip)) continue;
+      if (!raw || !tip || !isFullTime(raw)) continue;
       const pts = predictionPoints(raw, tip);
       predPoints += pts;
       if (!pts) continue;
       const home = teamById[match.homeId]?.short ?? "Home";
       const away = teamById[match.awayId]?.short ?? "Away";
-      award(lines, `Tip ${home} ${raw.home}–${raw.away} ${away} · ${pts === 3 ? "exact" : "result"}`, pts);
+      award(lines, `Tip ${home} ${tip.home}–${tip.away} ${away} · ${pts === 3 ? "exact" : "result"}`, pts);
     }
 
     for (const gender of ["M", "W"] as const) {

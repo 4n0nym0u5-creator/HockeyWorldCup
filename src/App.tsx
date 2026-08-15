@@ -18,7 +18,7 @@ import {
   type CloudStatus,
 } from "./lib/cloud";
 import { ownerOf } from "./lib/owners";
-import { predictionPoints, scoreboard, tipIsOnTime } from "./lib/scoring";
+import { predictionPoints, scoreboard } from "./lib/scoring";
 import { poolTable } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
@@ -761,15 +761,21 @@ function MatchModal({
 
           <OfficialScore match={match} score={existing} big />
           <WinnerCallout match={match} score={existing} />
-          <TipCallout match={match} score={existing} tips={matchTips} />
+          <TipCallout score={existing} tips={matchTips} />
           {existing?.status && <p className="lede">{existing.source === "fih" ? "Official FIH" : "Family"} · {existing.status}</p>}
 
           {home && away && (
             <>
               <div className="score-inputs">
-                <input inputMode="numeric" value={homeTip} onChange={(e) => setHomeTip(e.target.value)} />
+                <label>
+                  <small>{home.short}</small>
+                  <input inputMode="numeric" value={homeTip} onChange={(e) => setHomeTip(e.target.value)} />
+                </label>
                 <span className="vs">TIP</span>
-                <input inputMode="numeric" value={awayTip} onChange={(e) => setAwayTip(e.target.value)} />
+                <label>
+                  <small>{away.short}</small>
+                  <input inputMode="numeric" value={awayTip} onChange={(e) => setAwayTip(e.target.value)} />
+                </label>
               </div>
               <div className="actions">
                 <button
@@ -788,16 +794,14 @@ function MatchModal({
                 </button>
               </div>
               <div className="family-tips">
-                <p className="lede">Everyone's tips · lock before kick-off · scored at full-time</p>
+                <p className="lede">Everyone's tips · {home.short}–{away.short} · scored against the official full-time</p>
                 {members.map((member) => {
                   const tip = matchTips.find((item) => item.memberId === member.id);
-                  const onTime = tip ? tipIsOnTime(match, tip) : false;
-                  const pts = tip && onTime && isFullTime(existing) ? predictionPoints(existing, tip) : null;
+                  const pts = tip && isFullTime(existing) ? predictionPoints(existing, tip) : null;
                   return (
                     <div className="family-tip" key={member.id}>
                       <strong>{member.emoji} {member.name}</strong>
-                      <span>{tip ? `${tip.home}–${tip.away}` : "No tip yet"}</span>
-                      {tip && !onTime && <small>Late — no points</small>}
+                      <span>{tip ? `${home.short} ${tip.home}–${tip.away} ${away.short}` : "No tip yet"}</span>
                       {pts != null && <small>{pts === 3 ? "Exact +3" : pts === 1 ? "Result +1" : "Miss"}</small>}
                     </div>
                   );
