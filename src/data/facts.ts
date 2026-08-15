@@ -1,0 +1,28 @@
+export const tournamentFacts = [
+  "This is the first time the men's World Cup is co-hosted, and the first combined men's and women's World Cup in Belgium and the Netherlands.",
+  "The 2026 edition dropped quarter-finals. Top two from each opening pool go into a second group stage; results against teams you already played carry over.",
+  "Every team is guaranteed at least five matches. Nobody flies home after three games.",
+  "Germany men are defending champions after a 3–3 final and 5–4 shootout win over Belgium in Bhubaneswar, 2023.",
+  "Netherlands women are defending champions and have won nine of the fifteen women's World Cups ever played.",
+  "Tom Boon (Belgium) has 342 international goals and was 2025 FIH Men's Player of the Year. This may be his World Cup swansong.",
+  "Matías Rey of Argentina is 41 and playing a sixth World Cup — the oldest player in either tournament.",
+  "Four 18-year-olds made the festival: Belgium's Emilie Verhees and Famke van Heel, China's Luo Yaxi, and India's Sakshi Rana.",
+  "India men have not won the World Cup since 1975. Harmanpreet Singh is only the second man to captain them at two World Cups.",
+  "Pakistan, four-time world champions, are back after missing 2023. India vs Pakistan is 19 August at Wagener Stadium.",
+  "Scotland's women had not been to a World Cup since 2002 — a 24-year wait ended in Hyderabad.",
+  "China's women took Olympic silver in Paris 2024 under coach Alyson Annan, the former Dutch great.",
+  "Netherlands men are the reigning Olympic champions but have not won a World Cup since 1998.",
+  "Wagener Stadium in Amstelveen holds 15,000 and is Dutch hockey's cathedral. Wavre's new Belfius Arena holds 10,000.",
+  "The two venues sit about 220 km apart. Pool A and D live in the Netherlands; Pool B and C live in Belgium.",
+  "Belgium men sit world No. 1 after winning the Pro League by a distance. They host France on opening night in Wavre.",
+  "A field hockey match is four 15-minute quarters. Wins are worth three points, draws one — same as football, faster than football.",
+  "The women's final is 29 August in Amstelveen. The men's final is 30 August in Wavre.",
+];
+
+export const watchTips = [
+  "A penalty corner is hockey's set-piece jackpot. Drag-flickers like Harmanpreet, Hendrickx, Peillat and Jansen can win a match in one swing.",
+  "If a defender fouls a clear goal chance, the attacker can be awarded a penalty stroke — one-on-one from 6.4 metres.",
+  "The aerial (overhead) is legal if it is safe. England and Australia use it as a long switch; it looks like a different sport when it works.",
+  "Green card: two-minute sin bin. Yellow: five or ten minutes. Red: off. Teams go a player down, and the press becomes a hunt.",
+  "Family clash matches — when two of you own the sides — are worth bonus fantasy points. Trash talk is encouraged. Violence is not.",
+];

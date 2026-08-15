@@ -1,0 +1,61 @@
+import type { FamilyMember } from "./types";
+
+export const members: FamilyMember[] = [
+  {
+    id: "andrew",
+    name: "Andrew",
+    role: "House captain",
+    color: "#4c7fb5",
+    color2: "#1d3a5c",
+    accent: "#9ec4ea",
+    emoji: "⚓",
+    tagline: "World No. 1 Belgium men, plus a spread of women's underdogs and India's attack.",
+    teamIds: ["m-bel", "m-irl", "m-nzl", "w-chi", "w-sco", "w-irl", "w-ind"],
+  },
+  {
+    id: "nicole",
+    name: "Nicole",
+    role: "Tactician",
+    color: "#c45c7a",
+    color2: "#6b2438",
+    accent: "#f0b4c4",
+    emoji: "🌹",
+    tagline: "Dutch men, Indian men, and a women's spine of Argentina plus host Belgium.",
+    teamIds: ["m-ned", "m-ind", "m-rsa", "w-jpn", "w-arg", "w-bel"],
+  },
+  {
+    id: "georgia",
+    name: "Georgia",
+    role: "Chaos agent",
+    color: "#2a9d8f",
+    color2: "#10443e",
+    accent: "#8ee0d4",
+    emoji: "🦊",
+    tagline: "England men, Spain men, Hockeyroos, German women, and rising China.",
+    teamIds: ["m-eng", "m-fra", "m-esp", "w-aus", "w-ger", "w-chn"],
+  },
+  {
+    id: "emily",
+    name: "Emily",
+    role: "Closer",
+    color: "#e09f3e",
+    color2: "#6b4514",
+    accent: "#f6d48a",
+    emoji: "☀️",
+    tagline: "Kookaburras, Los Leones, Pakistan's romance, and the unbeatable Orange women.",
+    teamIds: ["m-aus", "m-arg", "m-pak", "w-ned", "w-usa", "w-eng"],
+  },
+  {
+    id: "hugo",
+    name: "Hugo",
+    role: "Wildcard",
+    color: "#7cb342",
+    color2: "#2d4a14",
+    accent: "#c6e89a",
+    emoji: "⚡",
+    tagline: "Defending German men, a cluster of underdogs, and Spain's Red Sticks.",
+    teamIds: ["m-ger", "m-mas", "m-wal", "m-jpn", "w-esp", "w-nzl", "w-rsa"],
+  },
+];
+
+export const memberById = Object.fromEntries(members.map((m) => [m.id, m]));

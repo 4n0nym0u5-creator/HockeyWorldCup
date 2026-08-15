@@ -1,0 +1,115 @@
+import { matches } from "../data/matches";
+import { members } from "../data/members";
+import { teamById } from "../data/teams";
+import type { MemberId, Match, MatchScore, Prediction } from "../data/types";
+import { ownerOf } from "./owners";
+import { poolFinished, poolTable } from "./standings";
+
+export interface ScoreLine {
+  label: string;
+  points: number;
+}
+
+export interface MemberScore {
+  memberId: MemberId;
+  total: number;
+  teamPoints: number;
+  predPoints: number;
+  bonusPoints: number;
+  lines: ScoreLine[];
+}
+
+function resultPoints(gf: number, ga: number) {
+  if (gf > ga) return 3;
+  if (gf === ga) return 1;
+  return 0;
+}
+
+function award(lines: ScoreLine[], label: string, points: number) {
+  if (!points) return;
+  lines.push({ label, points });
+}
+
+export function matchOwnerPoints(match: Match, score: MatchScore, teamId: string) {
+  const isHome = match.homeId === teamId;
+  const gf = isHome ? score.home : score.away;
+  const ga = isHome ? score.away : score.home;
+  const oppId = isHome ? match.awayId : match.homeId;
+  const team = teamById[teamId];
+  const opp = teamById[oppId];
+  let pts = resultPoints(gf, ga) + gf;
+  if (ga === 0 && gf >= ga) pts += 2;
+  if (opp && team && gf > ga && team.rank > opp.rank) pts += 2;
+  const myOwner = ownerOf(teamId);
+  const theirOwner = ownerOf(oppId);
+  if (myOwner && theirOwner && myOwner.id !== theirOwner.id && gf > ga) pts += 2;
+  if (match.round === "semifinal") pts += 8;
+  if (match.round === "final") pts += 12;
+  if (match.round === "third") pts += 4;
+  if (match.round === "final" && gf > ga) pts += 20;
+  if (match.round === "third" && gf > ga) pts += 6;
+  if (match.round === "placement" && gf > ga) pts += 2;
+  return pts;
+}
+
+export function predictionPoints(score: MatchScore, tip: Prediction) {
+  if (tip.home === score.home && tip.away === score.away) return 3;
+  const actual = Math.sign(score.home - score.away);
+  const guessed = Math.sign(tip.home - tip.away);
+  return actual === guessed ? 1 : 0;
+}
+
+export function scoreboard(
+  scores: Record<string, MatchScore>,
+  predictions: Record<string, Prediction[]>,
+): MemberScore[] {
+  return members.map((member) => {
+    const lines: ScoreLine[] = [];
+    let teamPoints = 0;
+    let predPoints = 0;
+    let bonusPoints = 0;
+
+    for (const match of matches) {
+      const score = scores[match.id];
+      if (!score || match.homeId === "tbd") continue;
+      for (const teamId of [match.homeId, match.awayId]) {
+        if (!member.teamIds.includes(teamId)) continue;
+        const pts = matchOwnerPoints(match, score, teamId);
+        const team = teamById[teamId];
+        award(lines, `${team?.short ?? teamId} ${score.home}–${score.away} ${match.label}`, pts);
+        teamPoints += pts;
+      }
+    }
+
+    for (const [matchId, tips] of Object.entries(predictions)) {
+      const score = scores[matchId];
+      const tip = tips.find((t) => t.memberId === member.id);
+      if (!score || !tip) continue;
+      const pts = predictionPoints(score, tip);
+      predPoints += pts;
+      if (pts) award(lines, `Tip ${matchId.toUpperCase()}`, pts);
+    }
+
+    for (const gender of ["M", "W"] as const) {
+      for (const pool of ["A", "B", "C", "D"] as const) {
+        if (!poolFinished(gender, pool, scores)) continue;
+        const table = poolTable(gender, pool, scores);
+        table.slice(0, 2).forEach((row, idx) => {
+          if (!member.teamIds.includes(row.teamId)) return;
+          const pts = idx === 0 ? 5 : 4;
+          bonusPoints += pts;
+          award(lines, `${teamById[row.teamId]?.short} advance from Pool ${pool}`, pts);
+        });
+      }
+    }
+
+    return {
+      memberId: member.id,
+      total: teamPoints + predPoints + bonusPoints,
+      teamPoints,
+      predPoints,
+      bonusPoints,
+      lines,
+    };
+  }).sort((a, b) => b.total - a.total);
+}

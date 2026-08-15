@@ -1,0 +1,624 @@
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { tournamentFacts, watchTips } from "./data/facts";
+import { matches, venues } from "./data/matches";
+import { members } from "./data/members";
+import { teamById, teams } from "./data/teams";
+import type { FamilyMember, Match, MatchScore, MemberId } from "./data/types";
+import { ownerOf } from "./lib/owners";
+import { scoreboard } from "./lib/scoring";
+import { poolTable } from "./lib/standings";
+import { exportState, importState, loadState, saveState, type AppState } from "./lib/storage";
+import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
+import { Flag, LocalNote, MatchCard, TeamMark } from "./ui";
+
+type Tab = "today" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
+
+const tabs: { id: Tab; label: string }[] = [
+  { id: "today", label: "Tonight" },
+  { id: "schedule", label: "Fixtures" },
+  { id: "rosters", label: "Houses" },
+  { id: "table", label: "Ladder" },
+  { id: "clashes", label: "Clashes" },
+  { id: "pools", label: "Pools" },
+  { id: "facts", label: "Briefing" },
+  { id: "rules", label: "Rules" },
+];
+
+export function App() {
+  const [state, setState] = useState<AppState>(() => loadState());
+  const [tab, setTab] = useState<Tab>("today");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+  const [share, setShare] = useState("");
+
+  useEffect(() => saveState(state), [state]);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const you = members.find((m) => m.id === state.you)!;
+  const board = useMemo(
+    () => scoreboard(state.scores, state.predictions),
+    [state.scores, state.predictions],
+  );
+  const open = matches.find((m) => m.id === openId) ?? null;
+
+  const patch = (partial: Partial<AppState>) => setState((s) => ({ ...s, ...partial }));
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          <div className="logo">🏑</div>
+          <div>
+            <p className="eyebrow">Family Cup · Belgium & Netherlands</p>
+            <h1>FIH World Cup 2026</h1>
+            <p className="lede">
+              Andrew, Nicole, Georgia, Emily and Hugo split every team. Enter scores, tip results,
+              and watch the ladder move for two weeks.
+            </p>
+          </div>
+        </div>
+        <div className="you-box">
+          <label>Watching as</label>
+          <select value={state.you} onChange={(e) => patch({ you: e.target.value as MemberId })}>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>{m.emoji} {m.name}</option>
+            ))}
+          </select>
+          <div style={{ marginTop: 8, fontSize: 13, opacity: 0.7 }}>
+            Times follow this device. Pitch clocks are CEST.
+          </div>
+        </div>
+      </header>
+
+      <nav className="nav">
+        {tabs.map((item) => (
+          <button key={item.id} className={tab === item.id ? "active" : ""} onClick={() => setTab(item.id)}>
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      {tab === "today" && <Today you={you} state={state} board={board} onOpen={setOpenId} tick={tick} />}
+      {tab === "schedule" && <Schedule you={you} state={state} onOpen={setOpenId} />}
+      {tab === "rosters" && <Rosters />}
+      {tab === "table" && <Ladder board={board} />}
+      {tab === "clashes" && <Clashes state={state} onOpen={setOpenId} />}
+      {tab === "pools" && <Pools scores={state.scores} />}
+      {tab === "facts" && <Facts />}
+      {tab === "rules" && <Rules share={share} setShare={setShare} state={state} patch={patch} />}
+
+      {open && (
+        <MatchModal
+          match={open}
+          state={state}
+          onClose={() => setOpenId(null)}
+          onScore={(score) => {
+            const scores = { ...state.scores };
+            if (score) scores[open.id] = score;
+            else delete scores[open.id];
+            patch({ scores });
+          }}
+          onTip={(home, away) => {
+            const current = state.predictions[open.id]?.filter((p) => p.memberId !== state.you) ?? [];
+            patch({
+              predictions: {
+                ...state.predictions,
+                [open.id]: [...current, { memberId: state.you, home, away }],
+              },
+            });
+          }}
+          onNote={(note) => patch({ notes: { ...state.notes, [open.id]: note } })}
+        />
+      )}
+    </div>
+  );
+}
+
+function Today({
+  you,
+  state,
+  board,
+  onOpen,
+  tick,
+}: {
+  you: FamilyMember;
+  state: AppState;
+  board: ReturnType<typeof scoreboard>;
+  onOpen: (id: string) => void;
+  tick: number;
+}) {
+  void tick;
+  const now = Date.now();
+  const upcoming = matches
+    .filter((m) => new Date(m.kickoff).getTime() + 90 * 60_000 > now)
+    .slice(0, 6);
+  const yours = upcoming.filter(
+    (m) => you.teamIds.includes(m.homeId) || you.teamIds.includes(m.awayId),
+  );
+  const fact = tournamentFacts[new Date().getDate() % tournamentFacts.length];
+  const youRow = board.find((b) => b.memberId === you.id);
+
+  return (
+    <>
+      <section className="hero">
+        <div className="hero-grid">
+          <div>
+            <div className="kicker">15–30 August · Opening festival</div>
+            <h2 style={{ fontSize: "clamp(42px, 8vw, 84px)", marginTop: 10 }}>
+              Five houses.<br />Thirty-two nations.
+            </h2>
+            <p className="lede">
+              {you.name}, you own {you.teamIds.length} sides. Your next watch is highlighted below.
+              Family clashes pay extra. Tap any match to enter the score or lock in a tip.
+            </p>
+          </div>
+          <div className="card fact">{fact}</div>
+        </div>
+        <div className="stat-row">
+          <div className="stat"><b>{youRow?.total ?? 0}</b><span>{you.name}'s points</span></div>
+          <div className="stat"><b>{Object.keys(state.scores).length}</b><span>Results entered</span></div>
+          <div className="stat"><b>{yours.length}</b><span>Your next matches</span></div>
+          <div className="stat"><b>{board[0] ? members.find((m) => m.id === board[0].memberId)?.name : "—"}</b><span>Current leader</span></div>
+        </div>
+      </section>
+
+      <button className="card spotlight" onClick={() => onOpen("m18")} style={{ width: "100%", textAlign: "left", marginBottom: 18 }}>
+        <p className="eyebrow">Must watch · 19 August</p>
+        <h3>India vs Pakistan · the rivalry</h3>
+        <p className="lede">
+          Nicole's India against Emily's Pakistan at Wagener Stadium. Harmanpreet's drag-flick vs a four-time world champion
+          in green. Family clash bonus is live. Tap to tip it now.
+        </p>
+      </button>
+
+      <div className="grid-2">
+        <div>
+          <div className="section-head"><h2>Up next</h2></div>
+          <div className="stack">
+            {upcoming.map((match) => (
+              <MatchCard key={match.id} match={match} score={state.scores[match.id]} onOpen={() => onOpen(match.id)} />
+            ))}
+          </div>
+        </div>
+        <div className="stack">
+          <MiniLadder board={board} />
+          <YourHouse you={you} />
+        </div>
+      </div>
+    </>
+  );
+}
+
+function MiniLadder({ board }: { board: ReturnType<typeof scoreboard> }) {
+  return (
+    <div className="panel" style={{ padding: 8 }}>
+      <div className="section-head" style={{ padding: "8px 8px 0" }}><h3>Live ladder</h3></div>
+      {board.map((row, i) => {
+        const member = members.find((m) => m.id === row.memberId)!;
+        return (
+          <div className="leader" key={row.memberId}>
+            <div className="rank-num">{i + 1}</div>
+            <div style={{ flex: 1 }}>
+              <strong>{member.emoji} {member.name}</strong>
+              <div style={{ fontSize: 12, opacity: 0.65 }}>{row.teamPoints} team · {row.predPoints} tips · {row.bonusPoints} bonus</div>
+            </div>
+            <b style={{ fontFamily: "Bebas Neue", fontSize: 32 }}>{row.total}</b>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function YourHouse({ you }: { you: FamilyMember }) {
+  return (
+    <div className="member-card card" style={{ "--member": you.color } as CSSProperties}>
+      <p className="eyebrow">{you.role}</p>
+      <h3>{you.emoji} {you.name}</h3>
+      <p className="italic" style={{ marginTop: 6 }}>{you.tagline}</p>
+      <div className="stack" style={{ marginTop: 12 }}>
+        {you.teamIds.map((id) => {
+          const team = teamById[id];
+          return (
+            <div className="team-chip" key={id}>
+              <Flag code={team.flag} alt={team.name} />
+              <div>
+                <strong>{team.name}</strong>
+                <div style={{ fontSize: 12, opacity: 0.65 }}>{team.gender === "M" ? "Men" : "Women"} · Pool {team.pool} · WR {team.rank}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Schedule({
+  you,
+  state,
+  onOpen,
+}: {
+  you: FamilyMember;
+  state: AppState;
+  onOpen: (id: string) => void;
+}) {
+  const [gender, setGender] = useState<"all" | "M" | "W">("all");
+  const [mine, setMine] = useState(false);
+  const [clashes, setClashes] = useState(false);
+
+  const filtered = matches.filter((match) => {
+    if (gender !== "all" && match.gender !== gender) return false;
+    if (mine && !you.teamIds.includes(match.homeId) && !you.teamIds.includes(match.awayId)) return false;
+    if (clashes) {
+      const a = ownerOf(match.homeId);
+      const b = ownerOf(match.awayId);
+      if (!a || !b || a.id === b.id) return false;
+    }
+    return true;
+  });
+
+  const groups = new Map<string, Match[]>();
+  for (const match of filtered) {
+    const key = dayKey(match.kickoff);
+    groups.set(key, [...(groups.get(key) ?? []), match]);
+  }
+
+  return (
+    <>
+      <div className="section-head">
+        <div>
+          <h2>Every fixture</h2>
+          <p className="lede">Pool games are locked in. Later rounds fill as you enter results — or stay as labelled ties.</p>
+        </div>
+      </div>
+      <div className="filters" style={{ marginBottom: 16 }}>
+        {(["all", "M", "W"] as const).map((g) => (
+          <button key={g} className={`chip ${gender === g ? "active" : ""}`} onClick={() => setGender(g)}>
+            {g === "all" ? "All" : g === "M" ? "Men" : "Women"}
+          </button>
+        ))}
+        <button className={`chip ${mine ? "active" : ""}`} onClick={() => setMine((v) => !v)}>My teams</button>
+        <button className={`chip ${clashes ? "active" : ""}`} onClick={() => setClashes((v) => !v)}>Family clashes</button>
+      </div>
+      {[...groups.entries()].map(([key, dayMatches]) => (
+        <div key={key}>
+          <div className="day-label">{formatDate(dayMatches[0].kickoff)}</div>
+          <div className="stack">
+            {dayMatches.map((match) => (
+              <MatchCard key={match.id} match={match} score={state.scores[match.id]} onOpen={() => onOpen(match.id)} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function Rosters() {
+  const max = Math.max(...members.map((m) => m.teamIds.reduce((sum, id) => sum + teamById[id].points, 0)));
+  return (
+    <>
+      <div className="section-head">
+        <div>
+          <h2>The five houses</h2>
+          <p className="lede">
+            Rosters were balanced on current FIH rankings, then shuffled so almost nobody owns two sides in the same pool.
+            Andrew and Hugo carry the leftover seventh team — weaker sides — so the quality still lands even.
+          </p>
+        </div>
+      </div>
+      <div className="grid-5">
+        {members.map((member) => {
+          const strength = member.teamIds.reduce((sum, id) => sum + teamById[id].points, 0);
+          return (
+            <div key={member.id} className="member-card card" style={{ "--member": member.color } as CSSProperties}>
+              <p className="eyebrow">{member.role}</p>
+              <h3>{member.emoji} {member.name}</h3>
+              <p className="italic" style={{ fontSize: 14, margin: "8px 0 12px" }}>{member.tagline}</p>
+              <div className="strength"><span style={{ width: `${(strength / max) * 100}%` }} /></div>
+              <div style={{ fontSize: 12, opacity: 0.6, margin: "8px 0 12px" }}>Strength index {strength.toLocaleString()}</div>
+              <div className="stack">
+                {member.teamIds.map((id) => {
+                  const team = teamById[id];
+                  return (
+                    <div className="team-chip" key={id}>
+                      <Flag code={team.flag} alt={team.name} />
+                      <div>
+                        <strong>{team.short} {team.gender}</strong>
+                        <div style={{ fontSize: 12, opacity: 0.65 }}>WR {team.rank} · {team.best}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="grid-2" style={{ marginTop: 22 }}>
+        {teams.map((team) => (
+          <article key={team.id} className="card" style={{ padding: 16 }}>
+            <div className="side">
+              <Flag code={team.flag} alt={team.name} />
+              <div>
+                <h3>{team.name} {team.gender === "M" ? "Men" : "Women"}</h3>
+                <div style={{ opacity: 0.65, fontSize: 13 }}>
+                  Pool {team.pool} · World ranking {team.rank} · {ownerOf(team.id)?.name}
+                </div>
+              </div>
+            </div>
+            <p className="lede">{team.blurb}</p>
+            <div className="stack" style={{ marginTop: 10 }}>
+              {team.players.map((p) => (
+                <div key={p.name}><strong>{p.name}</strong> · {p.role}<div style={{ opacity: 0.7, fontSize: 13 }}>{p.note}</div></div>
+              ))}
+              {team.facts.map((f) => <p key={f} className="italic" style={{ margin: 0, fontSize: 15 }}>{f}</p>)}
+            </div>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function Ladder({ board }: { board: ReturnType<typeof scoreboard> }) {
+  return (
+    <>
+      <div className="section-head">
+        <div>
+          <h2>The family ladder</h2>
+          <p className="lede">Wins, goals, upsets, clean sheets, knockout bonuses and tips all count. Open a match to see the breakdown.</p>
+        </div>
+      </div>
+      <div className="stack">
+        {board.map((row, i) => {
+          const member = members.find((m) => m.id === row.memberId)!;
+          return (
+            <div className="card leader" key={row.memberId} style={{ borderColor: member.color }}>
+              <div className="rank-num">{i + 1}</div>
+              <div style={{ flex: 1 }}>
+                <h3>{member.emoji} {member.name}</h3>
+                <div style={{ opacity: 0.7, fontSize: 13 }}>{row.lines.length} scoring events</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontFamily: "Bebas Neue", fontSize: 48, lineHeight: 1 }}>{row.total}</div>
+                <div style={{ fontSize: 12, opacity: 0.65 }}>{row.teamPoints} / {row.predPoints} / {row.bonusPoints}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function Clashes({ state, onOpen }: { state: AppState; onOpen: (id: string) => void }) {
+  const clashMatches = matches.filter((match) => {
+    const a = ownerOf(match.homeId);
+    const b = ownerOf(match.awayId);
+    return a && b && a.id !== b.id;
+  });
+  return (
+    <>
+      <div className="section-head">
+        <div>
+          <h2>Family clashes</h2>
+          <p className="lede">When two houses meet, the winner banks a +2 sibling bonus. These are the nights that decide the kitchen table.</p>
+        </div>
+      </div>
+      <div className="stack">
+        {clashMatches.map((match) => (
+          <MatchCard key={match.id} match={match} score={state.scores[match.id]} onOpen={() => onOpen(match.id)} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function Pools({ scores }: { scores: Record<string, MatchScore> }) {
+  return (
+    <>
+      <div className="section-head">
+        <div>
+          <h2>Pool tables</h2>
+          <p className="lede">Standings update as you enter scores. Top two from each pool go to the second group stage; bottom two play classification.</p>
+        </div>
+      </div>
+      {(["M", "W"] as const).map((gender) => (
+        <div key={gender} style={{ marginBottom: 28 }}>
+          <h3 style={{ marginBottom: 12 }}>{gender === "M" ? "Men" : "Women"}</h3>
+          <div className="grid-2">
+            {(["A", "B", "C", "D"] as const).map((pool) => {
+              const rows = poolTable(gender, pool, scores);
+              return (
+                <div className="card" key={pool} style={{ padding: 12, overflow: "auto" }}>
+                  <h3>Pool {pool}</h3>
+                  <table className="table">
+                    <thead>
+                      <tr><th>Team</th><th>House</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => {
+                        const team = teamById[row.teamId];
+                        return (
+                          <tr key={row.teamId}>
+                            <td><strong>{team.short}</strong></td>
+                            <td>{ownerOf(team.id)?.name}</td>
+                            <td>{row.played}</td>
+                            <td>{row.won}</td>
+                            <td>{row.drawn}</td>
+                            <td>{row.lost}</td>
+                            <td>{row.gf - row.ga}</td>
+                            <td><strong>{row.pts}</strong></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function Facts() {
+  return (
+    <>
+      <div className="section-head">
+        <div>
+          <h2>Tournament briefing</h2>
+          <p className="lede">Enough to sound dangerous at dinner. The real gold is on each team card in Houses.</p>
+        </div>
+      </div>
+      <div className="stack">
+        {tournamentFacts.map((fact) => <div className="card fact" key={fact}>{fact}</div>)}
+      </div>
+      <h3 style={{ margin: "28px 0 12px" }}>How to watch</h3>
+      <div className="stack">
+        {watchTips.map((tip) => <div className="card" key={tip} style={{ padding: 16 }}>{tip}</div>)}
+      </div>
+      <div className="grid-2" style={{ marginTop: 22 }}>
+        {Object.values(venues).map((venue) => (
+          <div className="card" key={venue.id} style={{ padding: 18 }}>
+            <p className="eyebrow">{venue.country}</p>
+            <h3>{venue.name}</h3>
+            <p className="lede">{venue.city} · {venue.capacity} · Pools {venue.id === "wagener" ? "A & D" : "B & C"} live here through the first week.</p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function Rules({
+  share,
+  setShare,
+  state,
+  patch,
+}: {
+  share: string;
+  setShare: (v: string) => void;
+  state: AppState;
+  patch: (p: Partial<AppState>) => void;
+}) {
+  return (
+    <div className="grid-2">
+      <div className="card" style={{ padding: 20 }}>
+        <h2>How you score</h2>
+        <ul className="lede">
+          <li>Win 3 · draw 1 · plus 1 point per goal your team scores</li>
+          <li>Clean sheet +2 · beat a higher-ranked side +2</li>
+          <li>Family clash win +2 — the sibling tax</li>
+          <li>Top of a pool +5 · second +4</li>
+          <li>Semi-final appearance +8 · final +12 · champion +20 · bronze +6</li>
+          <li>Everyone tips: exact score +3 · correct result +1</li>
+        </ul>
+        <p className="italic">Andrew and Hugo have seven teams because 32 does not divide by five. Their extras are the leftover lower-ranked sides, so the quality split stays honest.</p>
+      </div>
+      <div className="share card">
+        <h3>Share the kitchen ledger</h3>
+        <p className="lede">One person can enter scores, then copy this code into everyone else's phone so the ladder matches.</p>
+        <button className="primary" onClick={() => navigator.clipboard.writeText(exportState(state))}>Copy sync code</button>
+        <input value={share} onChange={(e) => setShare(e.target.value)} placeholder="Paste a sync code" />
+        <button
+          className="ghost"
+          onClick={() => {
+            const next = importState(share.trim());
+            if (next) patch(next);
+            else alert("That code did not look right.");
+          }}
+        >
+          Import code
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MatchModal({
+  match,
+  state,
+  onClose,
+  onScore,
+  onTip,
+  onNote,
+}: {
+  match: Match;
+  state: AppState;
+  onClose: () => void;
+  onScore: (score?: MatchScore) => void;
+  onTip: (home: number, away: number) => void;
+  onNote: (note: string) => void;
+}) {
+  const home = teamById[match.homeId];
+  const away = teamById[match.awayId];
+  const existing = state.scores[match.id];
+  const yourTip = state.predictions[match.id]?.find((p) => p.memberId === state.you);
+  const [homeScore, setHomeScore] = useState(String(existing?.home ?? 0));
+  const [awayScore, setAwayScore] = useState(String(existing?.away ?? 0));
+  const [note, setNote] = useState(state.notes[match.id] ?? "");
+  const status = matchStatus(match.kickoff);
+  const clash = home && away && ownerOf(home.id)?.id !== ownerOf(away.id)?.id;
+
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <p className="eyebrow">{match.gender === "M" ? "Men" : "Women"} · {venues[match.venue].name}</p>
+        <h2>{match.label}</h2>
+        <p className="lede">{formatDateTime(match.kickoff)}</p>
+        <LocalNote iso={match.kickoff} />
+        {match.note && <p className="italic">{match.note}</p>}
+        {clash && <p className="badge clash" style={{ marginTop: 10 }}>Family clash</p>}
+
+        <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
+          <TeamMark team={home} big />
+          <TeamMark team={away} big />
+        </div>
+
+        {home && away && (
+          <>
+            <div className="score-inputs">
+              <input inputMode="numeric" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} />
+              <span className="vs">SCORE</span>
+              <input inputMode="numeric" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} />
+            </div>
+            <div className="actions">
+              <button className="primary" onClick={() => onScore({ home: Number(homeScore) || 0, away: Number(awayScore) || 0 })}>
+                Save result
+              </button>
+              <button className="ghost" onClick={() => onTip(Number(homeScore) || 0, Number(awayScore) || 0)}>
+                Lock {members.find((m) => m.id === state.you)?.name}'s tip
+              </button>
+              {existing && <button className="ghost" onClick={() => onScore(undefined)}>Clear result</button>}
+            </div>
+            {yourTip && <p className="lede">Your tip: {yourTip.home}–{yourTip.away}</p>}
+            {status === "live" && <p className="badge live">Inside the live window — update as it happens</p>}
+          </>
+        )}
+
+        {home && (
+          <div className="card" style={{ padding: 12, marginTop: 16 }}>
+            <strong>Watch this</strong>
+            <p className="italic" style={{ margin: "6px 0 0" }}>{home.players[0]?.note} · {away?.players[0]?.note}</p>
+          </div>
+        )}
+
+        <div className="note-box" style={{ marginTop: 14 }}>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Family notes, pub bets, who fell asleep..." />
+          <button className="ghost" style={{ marginTop: 8 }} onClick={() => onNote(note)}>Save note</button>
+        </div>
+        <div className="actions" style={{ marginTop: 12 }}>
+          <button className="ghost" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
