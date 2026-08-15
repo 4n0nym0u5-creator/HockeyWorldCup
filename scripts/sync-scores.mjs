@@ -194,7 +194,7 @@ function mergePredictionLists(a = [], b = []) {
 }
 
 async function pullKitchen() {
-  const res = await fetch(`${KITCHEN}/json?poll=1&since=2d`);
+  const res = await fetch(`${KITCHEN}/json?poll=1&since=all`);
   if (!res.ok) return { notes: {}, predictions: {} };
   const notes = {};
   const predictions = {};

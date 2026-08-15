@@ -1,6 +1,54 @@
 {
-  "updatedAt": 0,
+  "updatedAt": 1786776109012,
   "scores": {},
-  "predictions": {},
-  "notes": {}
+  "predictions": {
+    "w01": [
+      {
+        "memberId": "andrew",
+        "home": 4,
+        "away": 2,
+        "at": 1786775986259
+      },
+      {
+        "memberId": "georgia",
+        "home": 3,
+        "away": 1,
+        "at": 1786776093581
+      }
+    ]
+  },
+  "notes": {
+    "w01": [
+      {
+        "id": "andrew-1786775554428",
+        "memberId": "andrew",
+        "text": "Georgia smells - says mum",
+        "at": 1786775554428
+      },
+      {
+        "id": "andrew-1786775945054",
+        "memberId": "andrew",
+        "text": "hugo is a drag queen",
+        "at": 1786775945054
+      },
+      {
+        "id": "georgia-1786775983533",
+        "memberId": "georgia",
+        "text": "ah it is i the chaos agent",
+        "at": 1786775983533
+      },
+      {
+        "id": "georgia-1786776009208",
+        "memberId": "georgia",
+        "text": "nicole smells balls",
+        "at": 1786776009208
+      },
+      {
+        "id": "georgia-1786776030225",
+        "memberId": "georgia",
+        "text": "troy and abed in the MORNING 😁",
+        "at": 1786776030225
+      }
+    ]
+  }
 }

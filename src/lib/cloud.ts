@@ -143,7 +143,7 @@ export async function pullKitchen(): Promise<{
   const notes: Record<string, MatchNote[]> = {};
   const predictions: Record<string, StampedPrediction[]> = {};
   try {
-    const res = await fetch(`${KITCHEN}/json?poll=1&since=2d`, { cache: "no-store" });
+    const res = await fetch(`${KITCHEN}/json?poll=1&since=all`, { cache: "no-store" });
     if (!res.ok) return { notes, predictions };
     const lines = (await res.text()).split("\n").map((line) => line.trim()).filter(Boolean);
     for (const line of lines) {
