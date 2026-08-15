@@ -234,7 +234,7 @@ h3 { font-size: 26px; }
 
 .match {
   display: grid;
-  grid-template-columns: 92px 1fr auto;
+  grid-template-columns: 92px 1fr;
   gap: 14px;
   padding: 14px;
   align-items: start;
@@ -338,13 +338,20 @@ h3 { font-size: 26px; }
 }
 
 .score-box {
-  min-width: 92px;
+  min-width: 0;
+  width: 100%;
+  margin: 12px 0 0;
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
   text-align: center;
   font-family: "Bebas Neue", sans-serif;
   font-size: 34px;
   line-height: 1;
-  align-self: center;
   display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   justify-items: center;
   gap: 2px;
 }
@@ -369,6 +376,7 @@ h3 { font-size: 26px; }
   background: rgba(255,255,255,0.04);
   font-size: 56px;
 }
+.score-box .ht-line,
 .official-board .ht-line { grid-column: 1 / -1; }
 .winner-callout {
   margin-top: 10px;
@@ -463,6 +471,19 @@ h3 { font-size: 26px; }
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
+}
+.score-lines {
+  display: grid;
+  gap: 6px;
+  padding: 0 16px 14px;
+}
+.score-lines p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.8;
 }
 .rank-num {
   font-family: "Bebas Neue", sans-serif;

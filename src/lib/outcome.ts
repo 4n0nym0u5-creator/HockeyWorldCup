@@ -2,7 +2,7 @@ import { members } from "../data/members";
 import { teamById } from "../data/teams";
 import type { Match, MatchScore, Prediction } from "../data/types";
 import { ownerOf } from "./owners";
-import { predictionPoints } from "./scoring";
+import { predictionPoints, tipIsOnTime } from "./scoring";
 import { isFullTime, phaseLabel } from "./scorePhase";
 
 export function matchOutcome(match: Match, score?: MatchScore) {
@@ -47,11 +47,12 @@ export function matchOutcome(match: Match, score?: MatchScore) {
   };
 }
 
-export function tipOutcome(score?: MatchScore, tips?: Prediction[]) {
+export function tipOutcome(score?: MatchScore, tips?: Prediction[], match?: Match) {
   if (!score || !isFullTime(score) || !tips?.length) return null;
   const ranked = tips.flatMap((tip) => {
     const member = members.find((item) => item.id === tip.memberId);
     if (!member) return [];
+    if (match && !tipIsOnTime(match, tip)) return [];
     return [{ tip, member, points: predictionPoints(score, tip) }];
   });
   if (!ranked.length) return null;

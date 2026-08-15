@@ -18,7 +18,7 @@ import {
   type CloudStatus,
 } from "./lib/cloud";
 import { ownerOf } from "./lib/owners";
-import { predictionPoints, scoreboard } from "./lib/scoring";
+import { predictionPoints, scoreboard, tipIsOnTime } from "./lib/scoring";
 import { poolTable } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
@@ -196,6 +196,7 @@ export function App() {
           state={state}
           onClose={() => setOpenId(null)}
           onTip={async (home, away) => {
+            if (Date.now() >= new Date(open.kickoff).getTime()) return;
             const tip = { memberId: state.you, home, away, at: Date.now() };
             const current = state.predictions[open.id]?.filter((p) => p.memberId !== state.you) ?? [];
             patch({
@@ -255,6 +256,10 @@ function Today({
   const upcoming = matches
     .filter((m) => new Date(m.kickoff).getTime() + 90 * 60_000 > now)
     .slice(0, 6);
+  const results = matches.filter((m) => {
+    const start = new Date(m.kickoff).getTime();
+    return start + 90 * 60_000 <= now && Boolean(state.scores[m.id]);
+  }).slice(-8);
   const yours = upcoming.filter(
     (m) => you.teamIds.includes(m.homeId) || you.teamIds.includes(m.awayId),
   );
@@ -296,6 +301,16 @@ function Today({
 
       <div className="grid-2">
         <div>
+          {results.length > 0 && (
+            <>
+              <div className="section-head"><h2>Latest results</h2></div>
+              <div className="stack" style={{ marginBottom: 22 }}>
+                {results.map((match) => (
+                  <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} onRefresh={onRefresh} />
+                ))}
+              </div>
+            </>
+          )}
           <div className="section-head"><h2>Up next</h2></div>
           <div className="stack">
             {upcoming.map((match) => (
@@ -506,16 +521,28 @@ function Ladder({ board }: { board: ReturnType<typeof scoreboard> }) {
         {board.map((row, i) => {
           const member = members.find((m) => m.id === row.memberId)!;
           return (
-            <div className="card leader" key={row.memberId} style={{ borderColor: member.color }}>
-              <div className="rank-num">{i + 1}</div>
-              <div style={{ flex: 1 }}>
-                <h3>{member.emoji} {member.name}</h3>
-                <div style={{ opacity: 0.7, fontSize: 13 }}>{row.lines.length} scoring events</div>
+            <div className="card" key={row.memberId} style={{ borderColor: member.color, padding: 0 }}>
+              <div className="leader">
+                <div className="rank-num">{i + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <h3>{member.emoji} {member.name}</h3>
+                  <div style={{ opacity: 0.7, fontSize: 13 }}>{row.lines.length} scoring events</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: "Bebas Neue", fontSize: 48, lineHeight: 1 }}>{row.total}</div>
+                  <div style={{ fontSize: 12, opacity: 0.65 }}>{row.teamPoints} team · {row.predPoints} tips · {row.bonusPoints} bonus</div>
+                </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontFamily: "Bebas Neue", fontSize: 48, lineHeight: 1 }}>{row.total}</div>
-                <div style={{ fontSize: 12, opacity: 0.65 }}>{row.teamPoints} / {row.predPoints} / {row.bonusPoints}</div>
-              </div>
+              {row.lines.length > 0 && (
+                <div className="score-lines">
+                  {row.lines.map((line) => (
+                    <p key={line.label}>
+                      <span>{line.label}</span>
+                      <b>+{line.points}</b>
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -638,7 +665,7 @@ function Rules({ cloud }: { cloud: CloudStatus }) {
           <li>Family clash win +2 — the sibling tax</li>
           <li>Top of a pool +5 · second +4</li>
           <li>Semi-final appearance +8 · final +12 · champion +20 · bronze +6</li>
-          <li>Everyone tips: exact score +3 · correct result +1 — scored at full-time</li>
+          <li>Everyone tips: exact score +3 · correct result +1 — lock before kick-off, scored at full-time. Late tips stay visible but score nothing.</li>
           <li>Official FIH scores write themselves at half-time and full-time, and the ladder updates at the same moment</li>
         </ul>
         <p className="italic">Andrew and Hugo have seven teams because 32 does not divide by five. Their extras are the leftover lower-ranked sides, so the quality split stays honest.</p>
@@ -734,7 +761,7 @@ function MatchModal({
 
           <OfficialScore match={match} score={existing} big />
           <WinnerCallout match={match} score={existing} />
-          <TipCallout score={existing} tips={matchTips} />
+          <TipCallout match={match} score={existing} tips={matchTips} />
           {existing?.status && <p className="lede">{existing.source === "fih" ? "Official FIH" : "Family"} · {existing.status}</p>}
 
           {home && away && (
@@ -747,24 +774,30 @@ function MatchModal({
               <div className="actions">
                 <button
                   className="primary"
-                  disabled={savingTip}
+                  disabled={savingTip || status !== "upcoming"}
                   onClick={() => {
                     setSavingTip(true);
                     void Promise.resolve(onTip(Number(homeTip) || 0, Number(awayTip) || 0)).finally(() => setSavingTip(false));
                   }}
                 >
-                  {savingTip ? "Sharing…" : `Lock ${members.find((m) => m.id === state.you)?.name}'s tip`}
+                  {savingTip
+                    ? "Sharing…"
+                    : status !== "upcoming"
+                      ? "Tips locked at kick-off"
+                      : `Lock ${members.find((m) => m.id === state.you)?.name}'s tip`}
                 </button>
               </div>
               <div className="family-tips">
-                <p className="lede">Everyone's tips · scored at full-time</p>
+                <p className="lede">Everyone's tips · lock before kick-off · scored at full-time</p>
                 {members.map((member) => {
                   const tip = matchTips.find((item) => item.memberId === member.id);
-                  const pts = tip && isFullTime(existing) ? predictionPoints(existing, tip) : null;
+                  const onTime = tip ? tipIsOnTime(match, tip) : false;
+                  const pts = tip && onTime && isFullTime(existing) ? predictionPoints(existing, tip) : null;
                   return (
                     <div className="family-tip" key={member.id}>
                       <strong>{member.emoji} {member.name}</strong>
                       <span>{tip ? `${tip.home}–${tip.away}` : "No tip yet"}</span>
+                      {tip && !onTime && <small>Late — no points</small>}
                       {pts != null && <small>{pts === 3 ? "Exact +3" : pts === 1 ? "Result +1" : "Miss"}</small>}
                     </div>
                   );

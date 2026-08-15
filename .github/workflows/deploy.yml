@@ -3,8 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - "cloud/state.json"
   workflow_dispatch:
 
 permissions:

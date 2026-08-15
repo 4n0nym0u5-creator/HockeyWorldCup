@@ -4,7 +4,13 @@ const REPO = "4n0nym0u5-creator/HockeyWorldCup";
 const PATH = "cloud/state.json";
 const RAW = `https://raw.githubusercontent.com/${REPO}/main/${PATH}`;
 const API = `https://api.github.com/repos/${REPO}/contents/${PATH}`;
+function pageLedgerUrl() {
+  const base = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+  return `${base}ledger.json?t=${Date.now()}`;
+}
+
 const LEDGER_URLS = [
+  () => pageLedgerUrl(),
   () => `${RAW}?t=${Date.now()}`,
   () => `https://media.githubusercontent.com/media/${REPO}/main/${PATH}?t=${Date.now()}`,
   () => `https://github.com/${REPO}/raw/refs/heads/main/${PATH}?t=${Date.now()}`,
@@ -82,8 +88,10 @@ export function mergePredictionLists(a: StampedPrediction[] = [], b: StampedPred
   const map = new Map<MemberId, StampedPrediction>();
   for (const tip of [...a, ...b]) {
     const memberId = asMember(tip.memberId);
-    if (!memberId || !Number.isFinite(tip.home) || !Number.isFinite(tip.away)) continue;
-    const stamped = { ...tip, memberId, at: tip.at ?? 0 };
+    const home = Number(tip.home);
+    const away = Number(tip.away);
+    if (!memberId || !Number.isFinite(home) || !Number.isFinite(away)) continue;
+    const stamped = { ...tip, memberId, home, away, at: Number(tip.at) || 0 };
     const current = map.get(memberId);
     if (!current || stamped.at >= current.at) map.set(memberId, stamped);
   }
@@ -142,6 +150,32 @@ function decodeBase64Utf8(value: string) {
   return new TextDecoder().decode(bytes);
 }
 
+function normalizeScores(raw: unknown): Record<string, StampedScore> {
+  if (!raw || typeof raw !== "object") return {};
+  const scores: Record<string, StampedScore> = {};
+  for (const [id, value] of Object.entries(raw as Record<string, Partial<StampedScore>>)) {
+    if (!value || !Number.isFinite(Number(value.home)) || !Number.isFinite(Number(value.away))) continue;
+    scores[id] = {
+      ...value,
+      home: Number(value.home),
+      away: Number(value.away),
+      htHome: value.htHome == null ? undefined : Number(value.htHome),
+      htAway: value.htAway == null ? undefined : Number(value.htAway),
+      at: Number(value.at) || 0,
+    };
+  }
+  return scores;
+}
+
+function tidyDoc(doc: CloudDoc): CloudDoc {
+  return {
+    ...doc,
+    scores: normalizeScores(doc.scores),
+    notes: normalizeNotes(doc.notes),
+    predictions: mergePredictionMaps(doc.predictions),
+  };
+}
+
 async function readLedgerResponse(res: Response): Promise<CloudDoc | null> {
   if (!res.ok) return null;
   const data = (await res.json()) as CloudDoc & { content?: string; encoding?: string };
@@ -153,31 +187,35 @@ async function readLedgerResponse(res: Response): Promise<CloudDoc | null> {
   return null;
 }
 
+async function fetchLedger(href: string, ms = 4000): Promise<CloudDoc | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    const isApi = href.startsWith("https://api.github.com");
+    const res = await fetch(href, {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: {
+        "Cache-Control": "no-cache",
+        Accept: isApi
+          ? "application/vnd.github.raw+json, application/vnd.github+json"
+          : "application/json",
+      },
+    });
+    const doc = await readLedgerResponse(res);
+    if (!doc || typeof doc !== "object") return null;
+    return tidyDoc(doc);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function pullLedger(): Promise<CloudDoc | null> {
   for (const url of LEDGER_URLS) {
-    try {
-      const href = url();
-      const isApi = href.startsWith("https://api.github.com");
-      const res = await fetch(href, {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-          Accept: isApi
-            ? "application/vnd.github.raw+json, application/vnd.github+json"
-            : "application/json",
-        },
-      });
-      const doc = await readLedgerResponse(res);
-      if (!doc || typeof doc !== "object") continue;
-      return {
-        ...doc,
-        scores: doc.scores ?? {},
-        notes: normalizeNotes(doc.notes),
-        predictions: mergePredictionMaps(doc.predictions),
-      };
-    } catch {
-      // try the next host — iPhones often block raw.githubusercontent.com
-    }
+    const doc = await fetchLedger(url());
+    if (doc) return doc;
   }
   return null;
 }

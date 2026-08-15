@@ -117,12 +117,19 @@ export function MatchCard({
           </button>
         </div>
         <div className="sides">
-          <TeamMark team={home} fact />
-          <TeamMark team={away} fact />
+          <TeamMark team={home} />
+          <TeamMark team={away} />
         </div>
+        <OfficialScore match={match} score={score} />
+        {home?.facts[0] && (
+          <p className="team-fact">{home.facts[0]}{home.players[0] && ` Watch ${home.players[0].name}: ${home.players[0].note}`}</p>
+        )}
+        {away?.facts[0] && (
+          <p className="team-fact">{away.facts[0]}{away.players[0] && ` Watch ${away.players[0].name}: ${away.players[0].note}`}</p>
+        )}
         {match.note && <p className="italic" style={{ margin: "10px 0 0", fontSize: 14 }}>{match.note}</p>}
         <WinnerCallout match={match} score={score} />
-        <TipCallout score={score} tips={familyTips} />
+        <TipCallout match={match} score={score} tips={familyTips} />
         {familyNotes.length > 0 && (
           <div className="card-notes">
             {familyNotes.slice(-3).map((item) => (
@@ -131,7 +138,6 @@ export function MatchCard({
           </div>
         )}
       </div>
-      <OfficialScore match={match} score={score} />
     </div>
   );
 }
@@ -182,8 +188,8 @@ export function WinnerCallout({ match, score }: { match: Match; score?: MatchSco
   );
 }
 
-export function TipCallout({ score, tips }: { score?: MatchScore; tips?: Prediction[] }) {
-  const outcome = tipOutcome(score, tips);
+export function TipCallout({ match, score, tips }: { match?: Match; score?: MatchScore; tips?: Prediction[] }) {
+  const outcome = tipOutcome(score, tips, match);
   if (!outcome) return null;
   return (
     <div
