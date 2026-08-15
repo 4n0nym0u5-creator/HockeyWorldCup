@@ -156,6 +156,18 @@ export function App() {
             {cloud === "saving" && "Live kitchen · saving…"}
             {cloud === "offline" && (canWriteLedger() ? "Live kitchen · retrying" : "Live kitchen · viewing the shared ladder")}
           </div>
+          <button
+            type="button"
+            className="ghost"
+            style={{ marginTop: 10, width: "100%" }}
+            onClick={() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set("v", Date.now().toString());
+              window.location.replace(url.toString());
+            }}
+          >
+            Load latest
+          </button>
         </div>
       </header>
 
