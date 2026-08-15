@@ -201,7 +201,13 @@ export function applyKitchenPayload(doc: CloudDoc, payload: KitchenPayload): Clo
 }
 
 export function subscribeKitchen(onPayload: (payload: KitchenPayload) => void) {
-  const source = new EventSource(`${KITCHEN}/sse`);
+  if (typeof EventSource === "undefined") return () => {};
+  let source: EventSource;
+  try {
+    source = new EventSource(`${KITCHEN}/sse`);
+  } catch {
+    return () => {};
+  }
   const handle = (event: MessageEvent) => {
     try {
       const ev = JSON.parse(event.data) as { event?: string; message?: string };
@@ -224,7 +230,12 @@ export async function pullKitchen(): Promise<{
   const notes: Record<string, MatchNote[]> = {};
   const predictions: Record<string, StampedPrediction[]> = {};
   try {
-    const res = await fetch(`${KITCHEN}/json?poll=1&since=all`, { cache: "no-store" });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(`${KITCHEN}/json?poll=1&since=all`, {
+      cache: "no-store",
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timer));
     if (!res.ok) return { notes, predictions };
     const lines = (await res.text()).split("\n").map((line) => line.trim()).filter(Boolean);
     for (const line of lines) {

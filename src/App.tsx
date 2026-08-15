@@ -9,8 +9,6 @@ import {
   emptyDoc,
   mergeDocs,
   applyKitchenPayload,
-  mergeNoteMaps,
-  mergePredictionMaps,
   postKitchenNote,
   postKitchenTip,
   pullKitchen,
@@ -66,26 +64,37 @@ export function App() {
       try {
         const remote = await pullLedger();
         if (cancelled) return;
-        const incoming = remote ?? emptyDoc();
-        if (withKitchen) {
-          const kitchen = await pullKitchen();
-          incoming.notes = mergeNoteMaps(incoming.notes, kitchen.notes);
-          incoming.predictions = mergePredictionMaps(incoming.predictions, kitchen.predictions);
-        }
-        applyIncoming(incoming);
+        applyIncoming(remote ?? emptyDoc());
       } catch {
         if (!cancelled) setCloud("offline");
+      }
+      if (!withKitchen || cancelled) return;
+      try {
+        const kitchen = await pullKitchen();
+        if (cancelled) return;
+        applyIncoming({
+          ...emptyDoc(),
+          notes: kitchen.notes,
+          predictions: kitchen.predictions,
+        });
+      } catch {
+        // ledger already painted; live kitchen is optional
       }
     };
     refreshKitchen.current = () => hydrate(true);
     void hydrate(true);
     const id = setInterval(() => void hydrate(false), 15_000);
-    const stopLive = subscribeKitchen((payload) => {
-      if (cancelled) return;
-      skipPush.current = true;
-      setState((current) => docToState(applyKitchenPayload(stateToDoc(current), payload), current.you));
-      setCloud("live");
-    });
+    let stopLive = () => {};
+    try {
+      stopLive = subscribeKitchen((payload) => {
+        if (cancelled) return;
+        skipPush.current = true;
+        setState((current) => docToState(applyKitchenPayload(stateToDoc(current), payload), current.you));
+        setCloud("live");
+      });
+    } catch {
+      // live stream is optional
+    }
     return () => {
       cancelled = true;
       clearInterval(id);
@@ -667,7 +676,7 @@ function MatchModal({
   const away = teamById[match.awayId];
   const existing = state.scores[match.id];
   const yourTip = state.predictions[match.id]?.find((p) => p.memberId === state.you);
-  const familyNotes = state.notes[match.id] ?? [];
+  const familyNotes = Array.isArray(state.notes[match.id]) ? state.notes[match.id] : [];
   const [homeTip, setHomeTip] = useState(String(yourTip?.home ?? 0));
   const [awayTip, setAwayTip] = useState(String(yourTip?.away ?? 0));
   const [note, setNote] = useState("");

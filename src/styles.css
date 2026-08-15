@@ -275,18 +275,28 @@ h3 { font-size: 26px; }
 .match { cursor: pointer; }
 .match:hover { border-color: var(--gold); transform: translateY(-1px); }
 .refresh-btn {
-  margin-top: 8px;
-  width: 100%;
-  padding: 6px 4px;
+  padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid var(--stroke);
-  background: rgba(255,255,255,0.06);
-  font-size: 10px;
+  border: 1px solid var(--gold);
+  background: rgba(232, 195, 106, 0.16);
+  color: var(--gold-2);
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+.refresh-btn:hover { background: rgba(232, 195, 106, 0.28); }
 .refresh-btn:disabled { opacity: 0.55; }
+.card-notes {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+.card-notes p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: 0.8;
+}
 .card { transition: 0.2s ease; }
 
 .when {
@@ -613,7 +623,6 @@ h3 { font-size: 26px; }
     grid-template-columns: 1fr;
   }
   .when { border: 0; text-align: left; padding-right: 0; }
-  .refresh-btn { width: auto; }
   .topbar { flex-direction: column; }
   .you-box { min-width: 0; width: 100%; }
   .score-box { text-align: left; }

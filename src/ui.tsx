@@ -69,6 +69,8 @@ export function MatchCard({
   const clash = homeOwner && awayOwner && homeOwner.id !== awayOwner.id;
   const left = countdown(match.kickoff);
   const [refreshing, setRefreshing] = useState(false);
+  const familyNotes = Array.isArray(notes) ? notes : [];
+  const familyTips = Array.isArray(tips) ? tips : [];
 
   return (
     <div
@@ -88,18 +90,6 @@ export function MatchCard({
         <div className="clock">{formatTime(match.kickoff, timeZone)}</div>
         <small>{formatDate(match.kickoff, timeZone)}</small>
         <small>{venue.short}</small>
-        <button
-          type="button"
-          className="refresh-btn"
-          disabled={refreshing}
-          onClick={(event) => {
-            event.stopPropagation();
-            setRefreshing(true);
-            void onRefresh().finally(() => setRefreshing(false));
-          }}
-        >
-          {refreshing ? "Refreshing" : "Refresh"}
-        </button>
       </div>
       <div>
         <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
@@ -109,15 +99,34 @@ export function MatchCard({
           {score?.phase === "ht" && <span className="badge live">Half time</span>}
           {status === "live" && !score && <span className="badge live">Live window</span>}
           {clash && <span className="badge clash">Family clash</span>}
-          {tips?.length ? <span className="badge">{tips.length} {tips.length === 1 ? "tip" : "tips"}</span> : null}
-          {notes?.length ? <span className="badge">{notes.length} {notes.length === 1 ? "note" : "notes"}</span> : null}
+          {familyTips.length ? <span className="badge">{familyTips.length} {familyTips.length === 1 ? "tip" : "tips"}</span> : null}
+          {familyNotes.length ? <span className="badge">{familyNotes.length} {familyNotes.length === 1 ? "note" : "notes"}</span> : null}
           {left && status === "upcoming" && <span className="badge">{left}</span>}
+          <button
+            type="button"
+            className="refresh-btn"
+            disabled={refreshing}
+            onClick={(event) => {
+              event.stopPropagation();
+              setRefreshing(true);
+              void onRefresh().finally(() => setRefreshing(false));
+            }}
+          >
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </button>
         </div>
         <div className="sides">
           <TeamMark team={home} fact />
           <TeamMark team={away} fact />
         </div>
         {match.note && <p className="italic" style={{ margin: "10px 0 0", fontSize: 14 }}>{match.note}</p>}
+        {familyNotes.length > 0 && (
+          <div className="card-notes">
+            {familyNotes.slice(-3).map((item) => (
+              <p key={item.id}>{item.text}</p>
+            ))}
+          </div>
+        )}
       </div>
       <div className="score-box">
         {score ? (
