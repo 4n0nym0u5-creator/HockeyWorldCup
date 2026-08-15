@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1786777269796,
+  "updatedAt": 1786779590428,
   "scores": {},
   "predictions": {
     "w01": [
@@ -17,9 +17,9 @@
       },
       {
         "memberId": "nicole",
-        "home": 6767676767,
-        "away": 456789123456789,
-        "at": 1786776732915
+        "home": 6,
+        "away": 4,
+        "at": 1786777401128
       },
       {
         "memberId": "emily",
@@ -64,6 +64,14 @@
         "home": 5,
         "away": 1,
         "at": 1786776948894
+      }
+    ],
+    "w04": [
+      {
+        "memberId": "andrew",
+        "home": 6,
+        "away": 3,
+        "at": 1786778946879
       }
     ]
   },
@@ -200,6 +208,14 @@
         "memberId": "andrew",
         "text": "I'm hoping Chile can score a goal",
         "at": 1786776976709
+      }
+    ],
+    "w04": [
+      {
+        "id": "andrew-1786778960429",
+        "memberId": "andrew",
+        "text": "Argos for the win",
+        "at": 1786778960429
       }
     ]
   }
