@@ -96,7 +96,7 @@ export function MatchCard({
             )}
           </>
         ) : (
-          <div className="vs">{status === "upcoming" ? "VS" : "ENTER"}</div>
+          <div className="vs">VS</div>
         )}
       </div>
     </button>

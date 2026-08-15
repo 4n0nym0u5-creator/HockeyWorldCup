@@ -140,12 +140,6 @@ export function App() {
           match={open}
           state={state}
           onClose={() => setOpenId(null)}
-          onScore={(score) => {
-            const scores = { ...state.scores };
-            if (score) scores[open.id] = { ...score, phase: "ft", source: "manual", at: Date.now(), by: state.you };
-            else delete scores[open.id];
-            patch({ scores });
-          }}
           onTip={(home, away) => {
             const current = state.predictions[open.id]?.filter((p) => p.memberId !== state.you) ?? [];
             patch({
@@ -603,14 +597,12 @@ function MatchModal({
   match,
   state,
   onClose,
-  onScore,
   onTip,
   onNote,
 }: {
   match: Match;
   state: AppState;
   onClose: () => void;
-  onScore: (score?: MatchScore) => void;
   onTip: (home: number, away: number) => void;
   onNote: (note: string) => void;
 }) {
@@ -618,18 +610,11 @@ function MatchModal({
   const away = teamById[match.awayId];
   const existing = state.scores[match.id];
   const yourTip = state.predictions[match.id]?.find((p) => p.memberId === state.you);
-  const [homeScore, setHomeScore] = useState(String(existing?.home ?? 0));
-  const [awayScore, setAwayScore] = useState(String(existing?.away ?? 0));
+  const [homeTip, setHomeTip] = useState(String(yourTip?.home ?? 0));
+  const [awayTip, setAwayTip] = useState(String(yourTip?.away ?? 0));
   const [note, setNote] = useState(state.notes[match.id] ?? "");
   const status = matchStatus(match.kickoff);
   const clash = home && away && ownerOf(home.id)?.id !== ownerOf(away.id)?.id;
-
-  useEffect(() => {
-    if (existing) {
-      setHomeScore(String(existing.home));
-      setAwayScore(String(existing.away));
-    }
-  }, [existing?.home, existing?.away, existing?.phase, existing?.at]);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -673,20 +658,14 @@ function MatchModal({
                 </p>
               )}
               <div className="score-inputs">
-                <input inputMode="numeric" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} />
-                <span className="vs">SCORE</span>
-                <input inputMode="numeric" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} />
+                <input inputMode="numeric" value={homeTip} onChange={(e) => setHomeTip(e.target.value)} />
+                <span className="vs">TIP</span>
+                <input inputMode="numeric" value={awayTip} onChange={(e) => setAwayTip(e.target.value)} />
               </div>
               <div className="actions">
-                <button className="primary" onClick={() => onScore({ home: Number(homeScore) || 0, away: Number(awayScore) || 0 })}>
-                  Save result
-                </button>
-                <button className="ghost" onClick={() => onTip(Number(homeScore) || 0, Number(awayScore) || 0)}>
+                <button className="primary" onClick={() => onTip(Number(homeTip) || 0, Number(awayTip) || 0)}>
                   Lock {members.find((m) => m.id === state.you)?.name}'s tip
                 </button>
-                {existing && existing.source !== "fih" && (
-                  <button className="ghost" onClick={() => onScore(undefined)}>Clear result</button>
-                )}
               </div>
               {yourTip && <p className="lede">Your tip: {yourTip.home}–{yourTip.away}{isFullTime(existing) ? "" : " · scored at full-time"}</p>}
               {existing?.phase === "ht" && <p className="badge live">Half-time is on the ladder — full-time will replace it</p>}
