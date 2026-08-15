@@ -558,7 +558,14 @@ h3 { font-size: 26px; }
   letter-spacing: 0.04em;
 }
 .family-tip small { opacity: 0.65; font-size: 12px; }
-.family-notes { display: grid; gap: 10px; margin: 14px 0 4px; }
+.family-notes {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 4px;
+  max-height: min(420px, 50dvh);
+  overflow-y: auto;
+  padding-right: 4px;
+}
 .family-note {
   padding: 12px 14px;
   border-radius: 14px;

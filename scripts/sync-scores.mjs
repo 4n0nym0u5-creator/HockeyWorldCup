@@ -167,7 +167,7 @@ function mergeNoteLists(a = [], b = []) {
     const key = noteKey(note);
     if (!map.has(key)) map.set(key, { ...note, id: key });
   }
-  return [...map.values()].sort((left, right) => left.at - right.at);
+  return [...map.values()].sort((left, right) => left.at - right.at).slice(-100);
 }
 
 function normalizeNotes(raw = {}) {

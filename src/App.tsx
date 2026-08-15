@@ -8,6 +8,7 @@ import {
   canWriteLedger,
   emptyDoc,
   mergeDocs,
+  applyKitchenPayload,
   mergeNoteMaps,
   mergePredictionMaps,
   postKitchenNote,
@@ -15,6 +16,7 @@ import {
   pullKitchen,
   pullLedger,
   pushLedger,
+  subscribeKitchen,
   type CloudStatus,
 } from "./lib/cloud";
 import { ownerOf } from "./lib/owners";
@@ -54,25 +56,38 @@ export function App() {
 
   useEffect(() => {
     let cancelled = false;
-    const hydrate = async () => {
+    const applyIncoming = (incoming: ReturnType<typeof emptyDoc>) => {
+      skipPush.current = true;
+      setState((current) => docToState(mergeDocs(stateToDoc(current), incoming), current.you));
+      setCloud("live");
+    };
+    const hydrate = async (withKitchen: boolean) => {
       try {
-        const [remote, kitchen] = await Promise.all([pullLedger(), pullKitchen()]);
+        const remote = await pullLedger();
         if (cancelled) return;
         const incoming = remote ?? emptyDoc();
-        incoming.notes = mergeNoteMaps(incoming.notes, kitchen.notes);
-        incoming.predictions = mergePredictionMaps(incoming.predictions, kitchen.predictions);
-        skipPush.current = true;
-        setState((current) => docToState(mergeDocs(stateToDoc(current), incoming), current.you));
-        setCloud("live");
+        if (withKitchen) {
+          const kitchen = await pullKitchen();
+          incoming.notes = mergeNoteMaps(incoming.notes, kitchen.notes);
+          incoming.predictions = mergePredictionMaps(incoming.predictions, kitchen.predictions);
+        }
+        applyIncoming(incoming);
       } catch {
         if (!cancelled) setCloud("offline");
       }
     };
-    void hydrate();
-    const id = setInterval(() => void hydrate(), 12_000);
+    void hydrate(true);
+    const id = setInterval(() => void hydrate(false), 15_000);
+    const stopLive = subscribeKitchen((payload) => {
+      if (cancelled) return;
+      skipPush.current = true;
+      setState((current) => docToState(applyKitchenPayload(stateToDoc(current), payload), current.you));
+      setCloud("live");
+    });
     return () => {
       cancelled = true;
       clearInterval(id);
+      stopLive();
     };
   }, []);
 
@@ -767,7 +782,7 @@ function MatchModal({
 
           <div className="note-box">
             <h3>Family notes</h3>
-            <p className="lede">Shared with every phone. Say who you are at the top of the site first.</p>
+            <p className="lede">Shared with every phone. Up to 100 notes stay on each match.</p>
             {familyNotes.length ? (
               <div className="family-notes">
                 {familyNotes.map((item) => {

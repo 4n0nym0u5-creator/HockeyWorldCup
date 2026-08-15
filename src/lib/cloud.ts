@@ -6,6 +6,7 @@ const RAW = `https://raw.githubusercontent.com/${REPO}/main/${PATH}`;
 const API = `https://api.github.com/repos/${REPO}/contents/${PATH}`;
 const KITCHEN = "https://ntfy.sh/fih-family-cup-2026-kitchen-notes";
 const MEMBERS: MemberId[] = ["andrew", "nicole", "georgia", "emily", "hugo"];
+export const MAX_NOTES_PER_MATCH = 100;
 
 export type CloudStatus = "live" | "saving" | "offline";
 
@@ -54,7 +55,7 @@ export function mergeNoteLists(a: MatchNote[] = [], b: MatchNote[] = []) {
     const key = noteKey(note);
     if (!map.has(key)) map.set(key, { ...note, id: key });
   }
-  return [...map.values()].sort((left, right) => left.at - right.at);
+  return [...map.values()].sort((left, right) => left.at - right.at).slice(-MAX_NOTES_PER_MATCH);
 }
 
 function asMember(value: unknown): MemberId | null {
@@ -130,10 +131,90 @@ export function normalizeNotes(raw: unknown): Record<string, MatchNote[]> {
 }
 
 export async function pullLedger(): Promise<CloudDoc | null> {
-  const res = await fetch(`${RAW}?t=${Date.now()}`, { cache: "no-store" });
+  const res = await fetch(`${RAW}?t=${Date.now()}`, {
+    cache: "no-store",
+    headers: { "Cache-Control": "no-cache" },
+  });
   if (!res.ok) return null;
   const doc = (await res.json()) as CloudDoc;
   return { ...doc, notes: normalizeNotes(doc.notes), predictions: mergePredictionMaps(doc.predictions) };
+}
+
+type KitchenPayload = {
+  kind?: string;
+  matchId?: string;
+  by?: string;
+  memberId?: string;
+  text?: string;
+  id?: string;
+  home?: number;
+  away?: number;
+  at?: number;
+};
+
+export function parseKitchenPayload(payload: KitchenPayload) {
+  const memberId = asMember(payload.by ?? payload.memberId);
+  const matchId = String(payload.matchId ?? "");
+  if (!memberId || !matchId) return null;
+  const at = Number(payload.at) || Date.now();
+  if (payload.kind === "tip" || (payload.kind !== "note" && Number.isFinite(payload.home) && Number.isFinite(payload.away) && !payload.text)) {
+    return {
+      matchId,
+      tip: { memberId, home: Number(payload.home), away: Number(payload.away), at } satisfies StampedPrediction,
+    };
+  }
+  const text = String(payload.text ?? "").trim();
+  if (!text || text === "probe") return null;
+  return {
+    matchId,
+    note: {
+      id: String(payload.id || `${memberId}:${at}:${text}`),
+      memberId,
+      text,
+      at,
+    } satisfies MatchNote,
+  };
+}
+
+export function applyKitchenPayload(doc: CloudDoc, payload: KitchenPayload): CloudDoc {
+  const parsed = parseKitchenPayload(payload);
+  if (!parsed) return doc;
+  if (parsed.note) {
+    return {
+      ...doc,
+      notes: {
+        ...doc.notes,
+        [parsed.matchId]: mergeNoteLists(doc.notes[parsed.matchId], [parsed.note]),
+      },
+    };
+  }
+  if (parsed.tip) {
+    return {
+      ...doc,
+      predictions: {
+        ...doc.predictions,
+        [parsed.matchId]: mergePredictionLists(doc.predictions[parsed.matchId], [parsed.tip]),
+      },
+    };
+  }
+  return doc;
+}
+
+export function subscribeKitchen(onPayload: (payload: KitchenPayload) => void) {
+  const source = new EventSource(`${KITCHEN}/sse`);
+  const handle = (event: MessageEvent) => {
+    try {
+      const ev = JSON.parse(event.data) as { event?: string; message?: string };
+      if (ev.event && ev.event !== "message") return;
+      if (!ev.message) return;
+      onPayload(JSON.parse(ev.message) as KitchenPayload);
+    } catch {
+      // ignore a broken live event
+    }
+  };
+  source.addEventListener("message", handle);
+  source.onmessage = handle;
+  return () => source.close();
 }
 
 export async function pullKitchen(): Promise<{
@@ -148,40 +229,13 @@ export async function pullKitchen(): Promise<{
     const lines = (await res.text()).split("\n").map((line) => line.trim()).filter(Boolean);
     for (const line of lines) {
       try {
-        const event = JSON.parse(line) as { id?: string; time?: number; message?: string };
-        const payload = JSON.parse(event.message ?? "{}") as {
-          kind?: string;
-          matchId?: string;
-          by?: string;
-          memberId?: string;
-          text?: string;
-          id?: string;
-          home?: number;
-          away?: number;
-          at?: number;
-        };
-        const memberId = asMember(payload.by ?? payload.memberId);
-        const matchId = String(payload.matchId ?? "");
-        if (!memberId || !matchId) continue;
-        const at = Number(payload.at) || Number(event.time) * 1000 || Date.now();
-        if (payload.kind === "tip" || (payload.kind !== "note" && Number.isFinite(payload.home) && Number.isFinite(payload.away) && !payload.text)) {
-          predictions[matchId] = mergePredictionLists(predictions[matchId], [{
-            memberId,
-            home: Number(payload.home),
-            away: Number(payload.away),
-            at,
-          }]);
-          continue;
-        }
-        const text = String(payload.text ?? "").trim();
-        if (!text || text === "probe") continue;
-        const note: MatchNote = {
-          id: String(payload.id || event.id || `${memberId}:${at}:${text}`),
-          memberId,
-          text,
-          at,
-        };
-        notes[matchId] = mergeNoteLists(notes[matchId], [note]);
+        const event = JSON.parse(line) as { time?: number; message?: string };
+        const payload = JSON.parse(event.message ?? "{}") as KitchenPayload;
+        if (!payload.at && event.time) payload.at = event.time * 1000;
+        const parsed = parseKitchenPayload(payload);
+        if (!parsed) continue;
+        if (parsed.note) notes[parsed.matchId] = mergeNoteLists(notes[parsed.matchId], [parsed.note]);
+        if (parsed.tip) predictions[parsed.matchId] = mergePredictionLists(predictions[parsed.matchId], [parsed.tip]);
       } catch {
         // skip a bad live kitchen item
       }
