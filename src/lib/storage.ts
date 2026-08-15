@@ -1,13 +1,12 @@
-import type { MemberId, MatchScore, Prediction } from "../data/types";
-import type { CloudDoc } from "./cloud";
+import type { MatchNote, MemberId, MatchScore, Prediction } from "../data/types";
+import { normalizeNotes, type CloudDoc } from "./cloud";
 
 const KEY = "family-cup-2026-v2";
 
 export interface AppState {
   scores: Record<string, MatchScore>;
   predictions: Record<string, Prediction[]>;
-  notes: Record<string, string>;
-  noteTimes: Record<string, number>;
+  notes: Record<string, MatchNote[]>;
   you: MemberId;
 }
 
@@ -15,20 +14,35 @@ const empty: AppState = {
   scores: {},
   predictions: {},
   notes: {},
-  noteTimes: {},
   you: "andrew",
 };
+
+function readLocalNotes(parsed: Partial<AppState> & { noteTimes?: Record<string, number> }) {
+  if (!parsed.notes) return {};
+  const first = Object.values(parsed.notes)[0];
+  if (Array.isArray(first) || first == null) return normalizeNotes(parsed.notes);
+  const legacy: Record<string, MatchNote[]> = {};
+  for (const [id, text] of Object.entries(parsed.notes as unknown as Record<string, string>)) {
+    if (!String(text ?? "").trim()) continue;
+    legacy[id] = [{
+      id: `legacy-${id}`,
+      memberId: parsed.you ?? "andrew",
+      text: String(text),
+      at: parsed.noteTimes?.[id] ?? 0,
+    }];
+  }
+  return legacy;
+}
 
 export function loadState(): AppState {
   try {
     const raw = localStorage.getItem(KEY) ?? localStorage.getItem("family-cup-2026-v1");
     if (!raw) return { ...empty };
-    const parsed = JSON.parse(raw) as Partial<AppState>;
+    const parsed = JSON.parse(raw) as Partial<AppState> & { noteTimes?: Record<string, number> };
     return {
       scores: parsed.scores ?? {},
       predictions: parsed.predictions ?? {},
-      notes: parsed.notes ?? {},
-      noteTimes: parsed.noteTimes ?? {},
+      notes: readLocalNotes(parsed),
       you: parsed.you ?? "andrew",
     };
   } catch {
@@ -47,10 +61,6 @@ export function stateToDoc(state: AppState): CloudDoc {
       ...tip,
       at: tip.at ?? 0,
     }));
-  }
-  const notes: CloudDoc["notes"] = {};
-  for (const [id, text] of Object.entries(state.notes)) {
-    notes[id] = { text, at: state.noteTimes[id] ?? 0 };
   }
   return {
     updatedAt: Date.now(),
@@ -71,22 +81,15 @@ export function stateToDoc(state: AppState): CloudDoc {
       ]),
     ),
     predictions,
-    notes,
+    notes: state.notes,
   };
 }
 
 export function docToState(doc: CloudDoc, you: MemberId): AppState {
-  const notes: Record<string, string> = {};
-  const noteTimes: Record<string, number> = {};
-  for (const [id, note] of Object.entries(doc.notes)) {
-    notes[id] = note.text;
-    noteTimes[id] = note.at;
-  }
   return {
     you,
     scores: doc.scores,
     predictions: doc.predictions,
-    notes,
-    noteTimes,
+    notes: normalizeNotes(doc.notes),
   };
 }

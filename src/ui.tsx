@@ -1,6 +1,6 @@
 import { venues } from "./data/matches";
 import { teamById } from "./data/teams";
-import type { Match, MatchScore, Team } from "./data/types";
+import type { Match, MatchNote, MatchScore, Team } from "./data/types";
 import { phaseLabel } from "./lib/scorePhase";
 import { ownerOf } from "./lib/owners";
 import { countdown, formatDate, formatTime, matchStatus, venueZone } from "./lib/time";
@@ -45,11 +45,13 @@ export function TeamMark({ team, big, fact }: { team?: Team; big?: boolean; fact
 export function MatchCard({
   match,
   score,
+  notes,
   timeZone,
   onOpen,
 }: {
   match: Match;
   score?: MatchScore;
+  notes?: MatchNote[];
   timeZone?: string;
   onOpen: () => void;
 }) {
@@ -77,6 +79,7 @@ export function MatchCard({
           {score?.phase === "ht" && <span className="badge live">Half time</span>}
           {status === "live" && !score && <span className="badge live">Live window</span>}
           {clash && <span className="badge clash">Family clash</span>}
+          {notes?.length ? <span className="badge">{notes.length} {notes.length === 1 ? "note" : "notes"}</span> : null}
           {left && status === "upcoming" && <span className="badge">{left}</span>}
         </div>
         <div className="sides">

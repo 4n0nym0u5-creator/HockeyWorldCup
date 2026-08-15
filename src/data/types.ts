@@ -75,3 +75,10 @@ export interface Prediction {
   away: number;
   at?: number;
 }
+
+export interface MatchNote {
+  id: string;
+  memberId: MemberId;
+  text: string;
+  at: number;
+}

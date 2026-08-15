@@ -4,7 +4,17 @@ import { matches, venues } from "./data/matches";
 import { members } from "./data/members";
 import { teamById, teams } from "./data/teams";
 import type { FamilyMember, Match, MatchScore, MemberId } from "./data/types";
-import { canWriteLedger, mergeDocs, pullLedger, pushLedger, type CloudStatus } from "./lib/cloud";
+import {
+  canWriteLedger,
+  emptyDoc,
+  mergeDocs,
+  mergeNoteMaps,
+  postKitchenNote,
+  pullKitchenNotes,
+  pullLedger,
+  pushLedger,
+  type CloudStatus,
+} from "./lib/cloud";
 import { ownerOf } from "./lib/owners";
 import { scoreboard } from "./lib/scoring";
 import { poolTable } from "./lib/standings";
@@ -44,10 +54,12 @@ export function App() {
     let cancelled = false;
     const hydrate = async () => {
       try {
-        const remote = await pullLedger();
-        if (!remote || cancelled) return;
+        const [remote, kitchen] = await Promise.all([pullLedger(), pullKitchenNotes()]);
+        if (cancelled) return;
+        const incoming = remote ?? emptyDoc();
+        incoming.notes = mergeNoteMaps(incoming.notes, kitchen);
         skipPush.current = true;
-        setState((current) => docToState(mergeDocs(stateToDoc(current), remote), current.you));
+        setState((current) => docToState(mergeDocs(stateToDoc(current), incoming), current.you));
         setCloud("live");
       } catch {
         if (!cancelled) setCloud("offline");
@@ -74,7 +86,7 @@ export function App() {
         .catch(() => setCloud("offline"));
     }, 700);
     return () => window.clearTimeout(id);
-  }, [state.scores, state.predictions, state.notes, state.noteTimes]);
+  }, [state.scores, state.predictions, state.notes]);
 
   const you = members.find((m) => m.id === state.you)!;
   const board = useMemo(
@@ -149,10 +161,25 @@ export function App() {
               },
             });
           }}
-          onNote={(note) => patch({
-            notes: { ...state.notes, [open.id]: note },
-            noteTimes: { ...state.noteTimes, [open.id]: Date.now() },
-          })}
+          onNote={async (text) => {
+            const note = {
+              id: `${state.you}-${Date.now()}`,
+              memberId: state.you,
+              text,
+              at: Date.now(),
+            };
+            patch({
+              notes: {
+                ...state.notes,
+                [open.id]: [...(state.notes[open.id] ?? []), note],
+              },
+            });
+            try {
+              await postKitchenNote(open.id, note);
+            } catch {
+              setCloud("offline");
+            }
+          }}
         />
       )}
     </div>
@@ -221,7 +248,7 @@ function Today({
           <div className="section-head"><h2>Up next</h2></div>
           <div className="stack">
             {upcoming.map((match) => (
-              <MatchCard key={match.id} match={match} score={state.scores[match.id]} onOpen={() => onOpen(match.id)} />
+              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} onOpen={() => onOpen(match.id)} />
             ))}
           </div>
         </div>
@@ -334,7 +361,7 @@ function Schedule({
           <div className="day-label">{formatDate(dayMatches[0].kickoff)}</div>
           <div className="stack">
             {dayMatches.map((match) => (
-              <MatchCard key={match.id} match={match} score={state.scores[match.id]} onOpen={() => onOpen(match.id)} />
+              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} onOpen={() => onOpen(match.id)} />
             ))}
           </div>
         </div>
@@ -460,7 +487,7 @@ function Clashes({ state, onOpen }: { state: AppState; onOpen: (id: string) => v
       </div>
       <div className="stack">
         {clashMatches.map((match) => (
-          <MatchCard key={match.id} match={match} score={state.scores[match.id]} onOpen={() => onOpen(match.id)} />
+          <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} onOpen={() => onOpen(match.id)} />
         ))}
       </div>
     </>
@@ -566,8 +593,8 @@ function Rules({ cloud }: { cloud: CloudStatus }) {
       <div className="share card">
         <h3>Live kitchen</h3>
         <p className="lede">
-          Official half-time and full-time scores come from FIH and land in the shared family ledger.
-          Open the site on any phone and you all see the same ladder. Status: {cloud === "live" ? "connected" : cloud === "saving" ? "saving" : "viewing"}.
+          Official scores and family notes live in the shared kitchen ledger. Open a match on any
+          phone and everyone sees the same thread. Status: {cloud === "live" ? "connected" : cloud === "saving" ? "saving" : "viewing"}.
         </p>
         <p className="italic">
           If saving ever fails on a new phone, paste the family ledger key once. Andrew can send it
@@ -604,15 +631,17 @@ function MatchModal({
   state: AppState;
   onClose: () => void;
   onTip: (home: number, away: number) => void;
-  onNote: (note: string) => void;
+  onNote: (note: string) => void | Promise<void>;
 }) {
   const home = teamById[match.homeId];
   const away = teamById[match.awayId];
   const existing = state.scores[match.id];
   const yourTip = state.predictions[match.id]?.find((p) => p.memberId === state.you);
+  const familyNotes = state.notes[match.id] ?? [];
   const [homeTip, setHomeTip] = useState(String(yourTip?.home ?? 0));
   const [awayTip, setAwayTip] = useState(String(yourTip?.away ?? 0));
-  const [note, setNote] = useState(state.notes[match.id] ?? "");
+  const [note, setNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
   const status = matchStatus(match.kickoff);
   const clash = home && away && ownerOf(home.id)?.id !== ownerOf(away.id)?.id;
 
@@ -706,8 +735,41 @@ function MatchModal({
           ) : null}
 
           <div className="note-box">
-            <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Family notes, pub bets, who fell asleep..." />
-            <button className="ghost" style={{ marginTop: 8 }} onClick={() => onNote(note)}>Save note</button>
+            <h3>Family notes</h3>
+            <p className="lede">Shared with every phone. Say who you are at the top of the site first.</p>
+            {familyNotes.length ? (
+              <div className="family-notes">
+                {familyNotes.map((item) => {
+                  const author = members.find((member) => member.id === item.memberId);
+                  return (
+                    <div className="family-note" key={item.id}>
+                      <strong>{author?.emoji} {author?.name ?? item.memberId}</strong>
+                      <span>{new Date(item.at).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })}</span>
+                      <p>{item.text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="italic">Nothing on this match yet. Leave the first note.</p>
+            )}
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pub bets, who fell asleep, the drag-flick that ruined Hugo..." />
+            <button
+              className="primary"
+              style={{ marginTop: 10 }}
+              disabled={savingNote || !note.trim()}
+              onClick={() => {
+                const text = note.trim();
+                if (!text) return;
+                setSavingNote(true);
+                void Promise.resolve(onNote(text)).finally(() => {
+                  setNote("");
+                  setSavingNote(false);
+                });
+              }}
+            >
+              {savingNote ? "Sharing…" : "Share with the family"}
+            </button>
           </div>
         </div>
       </div>

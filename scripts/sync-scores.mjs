@@ -154,12 +154,70 @@ async function fetchMatch(tmsId) {
   return parseMatchPage(await res.text());
 }
 
+const MEMBERS = new Set(["andrew", "nicole", "georgia", "emily", "hugo"]);
+const KITCHEN = "https://ntfy.sh/fih-family-cup-2026-kitchen-notes";
+
+function noteKey(note) {
+  return note.id || `${note.memberId}:${note.at}:${note.text}`;
+}
+
+function mergeNoteLists(a = [], b = []) {
+  const map = new Map();
+  for (const note of [...a, ...b]) {
+    const key = noteKey(note);
+    if (!map.has(key)) map.set(key, { ...note, id: key });
+  }
+  return [...map.values()].sort((left, right) => left.at - right.at);
+}
+
+function normalizeNotes(raw = {}) {
+  const notes = {};
+  for (const [matchId, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) {
+      notes[matchId] = mergeNoteLists(value.filter((item) => item?.text && MEMBERS.has(item.memberId)));
+    } else if (value?.text) {
+      notes[matchId] = [{ id: `legacy-${matchId}`, memberId: "andrew", text: value.text, at: value.at ?? 0 }];
+    }
+  }
+  return notes;
+}
+
+async function pullKitchenNotes() {
+  const res = await fetch(`${KITCHEN}/json?poll=1&since=2d`);
+  if (!res.ok) return {};
+  const notes = {};
+  for (const line of (await res.text()).split("\n").map((row) => row.trim()).filter(Boolean)) {
+    try {
+      const event = JSON.parse(line);
+      const payload = JSON.parse(event.message ?? "{}");
+      const memberId = payload.by ?? payload.memberId;
+      const text = String(payload.text ?? "").trim();
+      const matchId = String(payload.matchId ?? "");
+      if (!MEMBERS.has(memberId) || !text || !matchId || text === "probe") continue;
+      const note = {
+        id: String(payload.id || event.id || `${memberId}:${payload.at ?? 0}:${text}`),
+        memberId,
+        text,
+        at: Number(payload.at) || Number(event.time) * 1000 || Date.now(),
+      };
+      notes[matchId] = mergeNoteLists(notes[matchId], [note]);
+    } catch {
+      // skip a bad live note
+    }
+  }
+  return notes;
+}
+
+function notesChanged(before, after) {
+  return JSON.stringify(before) !== JSON.stringify(after);
+}
+
 async function main() {
   const times = kickoffs();
   const doc = JSON.parse(readFileSync(ledgerPath, "utf8"));
   doc.scores ??= {};
   doc.predictions ??= {};
-  doc.notes ??= {};
+  doc.notes = normalizeNotes(doc.notes);
 
   const jobs = Object.entries(TMS).filter(([matchId, tmsId]) => {
     void tmsId;
@@ -181,14 +239,25 @@ async function main() {
     }
   }
 
-  if (!changed) {
-    console.log(`No official score changes (${jobs.length} matches polled)`);
+  const beforeNotes = JSON.stringify(doc.notes);
+  try {
+    const kitchen = await pullKitchenNotes();
+    for (const [matchId, list] of Object.entries(kitchen)) {
+      doc.notes[matchId] = mergeNoteLists(doc.notes[matchId], list);
+    }
+  } catch (error) {
+    console.error("Kitchen notes failed:", error.message);
+  }
+  const noteUpdates = notesChanged(JSON.parse(beforeNotes), doc.notes);
+
+  if (!changed && !noteUpdates) {
+    console.log(`No official score or note changes (${jobs.length} matches polled)`);
     return;
   }
 
   doc.updatedAt = Date.now();
   writeFileSync(ledgerPath, `${JSON.stringify(doc, null, 2)}\n`);
-  console.log(`Wrote ${changed} official score(s) to cloud/state.json`);
+  console.log(`Wrote ${changed} official score(s) and ${noteUpdates ? "new notes" : "no new notes"} to cloud/state.json`);
 }
 
 await main();
