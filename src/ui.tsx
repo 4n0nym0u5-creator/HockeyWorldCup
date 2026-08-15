@@ -1,6 +1,7 @@
 import { venues } from "./data/matches";
 import { teamById } from "./data/teams";
 import type { Match, MatchScore, Team } from "./data/types";
+import { phaseLabel } from "./lib/scorePhase";
 import { ownerOf } from "./lib/owners";
 import { countdown, formatDate, formatTime, matchStatus, venueZone } from "./lib/time";
 
@@ -72,7 +73,9 @@ export function MatchCard({
         <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
           <span className="badge">{match.gender === "M" ? "Men" : "Women"}</span>
           <span className="badge">{match.label}</span>
-          {status === "live" && <span className="badge live">Live window</span>}
+          {score?.phase === "live" && <span className="badge live">Live</span>}
+          {score?.phase === "ht" && <span className="badge live">Half time</span>}
+          {status === "live" && !score && <span className="badge live">Live window</span>}
           {clash && <span className="badge clash">Family clash</span>}
           {left && status === "upcoming" && <span className="badge">{left}</span>}
         </div>
@@ -86,8 +89,11 @@ export function MatchCard({
         {score ? (
           <>
             {score.home}
-            <div className="vs">FT</div>
+            <div className="vs">{phaseLabel(score)}</div>
             {score.away}
+            {score.phase !== "ht" && score.htHome != null && score.htAway != null && (
+              <div className="ht-line">HT {score.htHome}–{score.htAway}</div>
+            )}
           </>
         ) : (
           <div className="vs">{status === "upcoming" ? "VS" : "ENTER"}</div>

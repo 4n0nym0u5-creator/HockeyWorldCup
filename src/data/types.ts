@@ -54,9 +54,17 @@ export interface Match {
   note?: string;
 }
 
+export type ScorePhase = "live" | "ht" | "ft";
+export type ScoreSource = "fih" | "manual";
+
 export interface MatchScore {
   home: number;
   away: number;
+  htHome?: number;
+  htAway?: number;
+  phase?: ScorePhase;
+  source?: ScoreSource;
+  status?: string;
   at?: number;
   by?: MemberId;
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync-scores": "node scripts/sync-scores.mjs"
   },
   "dependencies": {
     "react": "^19.1.1",

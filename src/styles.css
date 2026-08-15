@@ -328,6 +328,14 @@ h3 { font-size: 26px; }
   letter-spacing: 0.2em;
 }
 
+.ht-line {
+  margin-top: 6px;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;

@@ -82,10 +82,29 @@ export async function pushLedger(doc: CloudDoc) {
   if (!res.ok) throw new Error("Could not save the family ledger");
 }
 
+function newer(a: StampedScore, b: StampedScore) {
+  return a.at >= b.at ? a : b;
+}
+
+function officialOf(phase: StampedScore["phase"], a: StampedScore, b: StampedScore) {
+  const hits = [a, b].filter((score) => score.source === "fih" && score.phase === phase);
+  return hits.length ? newer(hits[0], hits[hits.length - 1]) : null;
+}
+
+/** Official FIH snapshots beat manual entries. Never drop a later official phase. */
+export function pickScore(remote: StampedScore, local: StampedScore): StampedScore {
+  return (
+    officialOf("ft", remote, local) ??
+    officialOf("ht", remote, local) ??
+    officialOf("live", remote, local) ??
+    newer(local, remote)
+  );
+}
+
 export function mergeDocs(local: CloudDoc, remote: CloudDoc): CloudDoc {
   const scores = { ...remote.scores };
   for (const [id, score] of Object.entries(local.scores)) {
-    if (!scores[id] || score.at >= scores[id].at) scores[id] = score;
+    scores[id] = scores[id] ? pickScore(scores[id], score) : score;
   }
 
   const predictions: CloudDoc["predictions"] = { ...remote.predictions };

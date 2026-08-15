@@ -3,6 +3,7 @@ import { members } from "../data/members";
 import { teamById } from "../data/teams";
 import type { MemberId, Match, MatchScore, Prediction } from "../data/types";
 import { ownerOf } from "./owners";
+import { isFullTime, isProvisional, ladderScore } from "./scorePhase";
 import { poolFinished, poolTable } from "./standings";
 
 export interface ScoreLine {
@@ -16,6 +17,7 @@ export interface MemberScore {
   teamPoints: number;
   predPoints: number;
   bonusPoints: number;
+  provisional: boolean;
   lines: ScoreLine[];
 }
 
@@ -70,22 +72,24 @@ export function scoreboard(
     let bonusPoints = 0;
 
     for (const match of matches) {
-      const score = scores[match.id];
+      const raw = scores[match.id];
+      const score = ladderScore(raw);
       if (!score || match.homeId === "tbd") continue;
       for (const teamId of [match.homeId, match.awayId]) {
         if (!member.teamIds.includes(teamId)) continue;
         const pts = matchOwnerPoints(match, score, teamId);
         const team = teamById[teamId];
-        award(lines, `${team?.short ?? teamId} ${score.home}–${score.away} ${match.label}`, pts);
+        const tag = isProvisional(raw) ? "HT" : "FT";
+        award(lines, `${tag} ${team?.short ?? teamId} ${score.home}–${score.away} ${match.label}`, pts);
         teamPoints += pts;
       }
     }
 
     for (const [matchId, tips] of Object.entries(predictions)) {
-      const score = scores[matchId];
+      const raw = scores[matchId];
       const tip = tips.find((t) => t.memberId === member.id);
-      if (!score || !tip) continue;
-      const pts = predictionPoints(score, tip);
+      if (!raw || !tip || !isFullTime(raw)) continue;
+      const pts = predictionPoints(raw, tip);
       predPoints += pts;
       if (pts) award(lines, `Tip ${matchId.toUpperCase()}`, pts);
     }
@@ -109,6 +113,7 @@ export function scoreboard(
       teamPoints,
       predPoints,
       bonusPoints,
+      provisional: Object.values(scores).some(isProvisional),
       lines,
     };
   }).sort((a, b) => b.total - a.total);

@@ -1,6 +1,7 @@
 import { matches } from "../data/matches";
 import { teamById } from "../data/teams";
 import type { Gender, MatchScore } from "../data/types";
+import { isFullTime } from "./scorePhase";
 
 export interface Row {
   teamId: string;
@@ -51,7 +52,7 @@ export function poolTable(gender: Gender, pool: string, scores: Record<string, M
     if (!rows.has(match.homeId)) rows.set(match.homeId, emptyRow(match.homeId));
     if (!rows.has(match.awayId)) rows.set(match.awayId, emptyRow(match.awayId));
     const score = scores[match.id];
-    if (!score) continue;
+    if (!isFullTime(score)) continue;
     apply(rows.get(match.homeId)!, score.home, score.away);
     apply(rows.get(match.awayId)!, score.away, score.home);
   }
@@ -61,5 +62,5 @@ export function poolTable(gender: Gender, pool: string, scores: Record<string, M
 export function poolFinished(gender: Gender, pool: string, scores: Record<string, MatchScore>) {
   return matches
     .filter((m) => m.gender === gender && m.round === "pool" && m.pool === pool)
-    .every((m) => scores[m.id]);
+    .every((m) => isFullTime(scores[m.id]));
 }

@@ -57,7 +57,17 @@ export function stateToDoc(state: AppState): CloudDoc {
     scores: Object.fromEntries(
       Object.entries(state.scores).map(([id, score]) => [
         id,
-        { home: score.home, away: score.away, at: score.at ?? 0, by: score.by },
+        {
+          home: score.home,
+          away: score.away,
+          htHome: score.htHome,
+          htAway: score.htAway,
+          phase: score.phase,
+          source: score.source,
+          status: score.status,
+          at: score.at ?? 0,
+          by: score.by,
+        },
       ]),
     ),
     predictions,

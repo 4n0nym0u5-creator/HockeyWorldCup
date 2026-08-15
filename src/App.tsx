@@ -10,6 +10,7 @@ import { scoreboard } from "./lib/scoring";
 import { poolTable } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
+import { isFullTime, phaseLabel } from "./lib/scorePhase";
 import { Flag, LocalNote, MatchCard, TeamMark } from "./ui";
 
 type Tab = "today" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
@@ -93,8 +94,8 @@ export function App() {
             <p className="eyebrow">Family Cup · Belgium & Netherlands</p>
             <h1>FIH World Cup 2026</h1>
             <p className="lede">
-              Andrew, Nicole, Georgia, Emily and Hugo split every team. Enter scores, tip results,
-              and watch the ladder move for two weeks.
+              Andrew, Nicole, Georgia, Emily and Hugo split every team. Official scores land at
+              half-time and full-time, and the family ladder moves with them.
             </p>
           </div>
         </div>
@@ -141,7 +142,7 @@ export function App() {
           onClose={() => setOpenId(null)}
           onScore={(score) => {
             const scores = { ...state.scores };
-            if (score) scores[open.id] = { ...score, at: Date.now(), by: state.you };
+            if (score) scores[open.id] = { ...score, phase: "ft", source: "manual", at: Date.now(), by: state.you };
             else delete scores[open.id];
             patch({ scores });
           }}
@@ -199,14 +200,14 @@ function Today({
             </h2>
             <p className="lede">
               {you.name}, you own {you.teamIds.length} sides. Your next watch is highlighted below.
-              Family clashes pay extra. Tap any match to enter the score or lock in a tip.
+              Family clashes pay extra. Official FIH scores lock in at half-time and full-time.
             </p>
           </div>
           <div className="card fact">{fact}</div>
         </div>
         <div className="stat-row">
           <div className="stat"><b>{youRow?.total ?? 0}</b><span>{you.name}'s points</span></div>
-          <div className="stat"><b>{Object.keys(state.scores).length}</b><span>Results entered</span></div>
+          <div className="stat"><b>{Object.keys(state.scores).length}</b><span>Official results</span></div>
           <div className="stat"><b>{yours.length}</b><span>Your next matches</span></div>
           <div className="stat"><b>{board[0] ? members.find((m) => m.id === board[0].memberId)?.name : "—"}</b><span>Current leader</span></div>
         </div>
@@ -242,7 +243,10 @@ function Today({
 function MiniLadder({ board }: { board: ReturnType<typeof scoreboard> }) {
   return (
     <div className="panel" style={{ padding: 8 }}>
-      <div className="section-head" style={{ padding: "8px 8px 0" }}><h3>Live ladder</h3></div>
+      <div className="section-head" style={{ padding: "8px 8px 0" }}>
+        <h3>Live ladder</h3>
+        {board.some((row) => row.provisional) && <p className="lede">Includes half-time points</p>}
+      </div>
       {board.map((row, i) => {
         const member = members.find((m) => m.id === row.memberId)!;
         return (
@@ -418,7 +422,10 @@ function Ladder({ board }: { board: ReturnType<typeof scoreboard> }) {
       <div className="section-head">
         <div>
           <h2>The family ladder</h2>
-          <p className="lede">Wins, goals, upsets, clean sheets, knockout bonuses and tips all count. Open a match to see the breakdown.</p>
+          <p className="lede">
+            Half-time scores count as they land; full-time replaces them. Tips wait for the final whistle.
+            {board.some((row) => row.provisional) ? " Some points are still provisional until full-time." : ""}
+          </p>
         </div>
       </div>
       <div className="stack">
@@ -472,7 +479,7 @@ function Pools({ scores }: { scores: Record<string, MatchScore> }) {
       <div className="section-head">
         <div>
           <h2>Pool tables</h2>
-          <p className="lede">Standings update as you enter scores. Top two from each pool go to the second group stage; bottom two play classification.</p>
+          <p className="lede">Pool tables use full-time results only. Top two from each pool go to the second group stage; bottom two play classification.</p>
         </div>
       </div>
       {(["M", "W"] as const).map((gender) => (
@@ -557,15 +564,16 @@ function Rules({ cloud }: { cloud: CloudStatus }) {
           <li>Family clash win +2 — the sibling tax</li>
           <li>Top of a pool +5 · second +4</li>
           <li>Semi-final appearance +8 · final +12 · champion +20 · bronze +6</li>
-          <li>Everyone tips: exact score +3 · correct result +1</li>
+          <li>Everyone tips: exact score +3 · correct result +1 — scored at full-time</li>
+          <li>Official FIH scores write themselves at half-time and full-time, and the ladder updates at the same moment</li>
         </ul>
         <p className="italic">Andrew and Hugo have seven teams because 32 does not divide by five. Their extras are the leftover lower-ranked sides, so the quality split stays honest.</p>
       </div>
       <div className="share card">
         <h3>Live kitchen</h3>
         <p className="lede">
-          Scores, tips and notes live in a shared family ledger. Open the site on any phone and you
-          all see the same ladder — no codes to copy. Status: {cloud === "live" ? "connected" : cloud === "saving" ? "saving" : "viewing"}.
+          Official half-time and full-time scores come from FIH and land in the shared family ledger.
+          Open the site on any phone and you all see the same ladder. Status: {cloud === "live" ? "connected" : cloud === "saving" ? "saving" : "viewing"}.
         </p>
         <p className="italic">
           If saving ever fails on a new phone, paste the family ledger key once. Andrew can send it
@@ -617,6 +625,13 @@ function MatchModal({
   const clash = home && away && ownerOf(home.id)?.id !== ownerOf(away.id)?.id;
 
   useEffect(() => {
+    if (existing) {
+      setHomeScore(String(existing.home));
+      setAwayScore(String(existing.away));
+    }
+  }, [existing?.home, existing?.away, existing?.phase, existing?.at]);
+
+  useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -650,6 +665,13 @@ function MatchModal({
 
           {home && away && (
             <>
+              {existing && (
+                <p className="lede">
+                  {existing.source === "fih" ? "Official FIH" : "Family"} {phaseLabel(existing)} {existing.home}–{existing.away}
+                  {existing.htHome != null && existing.phase !== "ht" ? ` · HT ${existing.htHome}–${existing.htAway}` : ""}
+                  {existing.status ? ` · ${existing.status}` : ""}
+                </p>
+              )}
               <div className="score-inputs">
                 <input inputMode="numeric" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} />
                 <span className="vs">SCORE</span>
@@ -662,10 +684,14 @@ function MatchModal({
                 <button className="ghost" onClick={() => onTip(Number(homeScore) || 0, Number(awayScore) || 0)}>
                   Lock {members.find((m) => m.id === state.you)?.name}'s tip
                 </button>
-                {existing && <button className="ghost" onClick={() => onScore(undefined)}>Clear result</button>}
+                {existing && existing.source !== "fih" && (
+                  <button className="ghost" onClick={() => onScore(undefined)}>Clear result</button>
+                )}
               </div>
-              {yourTip && <p className="lede">Your tip: {yourTip.home}–{yourTip.away}</p>}
-              {status === "live" && <p className="badge live">Inside the live window — update as it happens</p>}
+              {yourTip && <p className="lede">Your tip: {yourTip.home}–{yourTip.away}{isFullTime(existing) ? "" : " · scored at full-time"}</p>}
+              {existing?.phase === "ht" && <p className="badge live">Half-time is on the ladder — full-time will replace it</p>}
+              {existing?.phase === "live" && <p className="badge live">Live from FIH — family points lock at half-time and full-time</p>}
+              {status === "live" && !existing && <p className="badge live">Inside the live window — official score lands at half-time</p>}
             </>
           )}
 

@@ -1,0 +1,34 @@
+name: Sync FIH scores
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-scores
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/sync-scores.mjs
+      - name: Save official scores
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloud/state.json
+          if git diff --cached --quiet; then
+            echo "Ledger unchanged"
+            exit 0
+          fi
+          git commit -m "Update live scores from FIH"
+          git push
