@@ -9,14 +9,16 @@ import {
   emptyDoc,
   mergeDocs,
   mergeNoteMaps,
+  mergePredictionMaps,
   postKitchenNote,
-  pullKitchenNotes,
+  postKitchenTip,
+  pullKitchen,
   pullLedger,
   pushLedger,
   type CloudStatus,
 } from "./lib/cloud";
 import { ownerOf } from "./lib/owners";
-import { scoreboard } from "./lib/scoring";
+import { predictionPoints, scoreboard } from "./lib/scoring";
 import { poolTable } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
@@ -54,10 +56,11 @@ export function App() {
     let cancelled = false;
     const hydrate = async () => {
       try {
-        const [remote, kitchen] = await Promise.all([pullLedger(), pullKitchenNotes()]);
+        const [remote, kitchen] = await Promise.all([pullLedger(), pullKitchen()]);
         if (cancelled) return;
         const incoming = remote ?? emptyDoc();
-        incoming.notes = mergeNoteMaps(incoming.notes, kitchen);
+        incoming.notes = mergeNoteMaps(incoming.notes, kitchen.notes);
+        incoming.predictions = mergePredictionMaps(incoming.predictions, kitchen.predictions);
         skipPush.current = true;
         setState((current) => docToState(mergeDocs(stateToDoc(current), incoming), current.you));
         setCloud("live");
@@ -152,14 +155,20 @@ export function App() {
           match={open}
           state={state}
           onClose={() => setOpenId(null)}
-          onTip={(home, away) => {
+          onTip={async (home, away) => {
+            const tip = { memberId: state.you, home, away, at: Date.now() };
             const current = state.predictions[open.id]?.filter((p) => p.memberId !== state.you) ?? [];
             patch({
               predictions: {
                 ...state.predictions,
-                [open.id]: [...current, { memberId: state.you, home, away, at: Date.now() }],
+                [open.id]: [...current, tip],
               },
             });
+            try {
+              await postKitchenTip(open.id, tip);
+            } catch {
+              setCloud("offline");
+            }
           }}
           onNote={async (text) => {
             const note = {
@@ -248,7 +257,7 @@ function Today({
           <div className="section-head"><h2>Up next</h2></div>
           <div className="stack">
             {upcoming.map((match) => (
-              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} onOpen={() => onOpen(match.id)} />
+              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} />
             ))}
           </div>
         </div>
@@ -361,7 +370,7 @@ function Schedule({
           <div className="day-label">{formatDate(dayMatches[0].kickoff)}</div>
           <div className="stack">
             {dayMatches.map((match) => (
-              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} onOpen={() => onOpen(match.id)} />
+              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} />
             ))}
           </div>
         </div>
@@ -487,7 +496,7 @@ function Clashes({ state, onOpen }: { state: AppState; onOpen: (id: string) => v
       </div>
       <div className="stack">
         {clashMatches.map((match) => (
-          <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} onOpen={() => onOpen(match.id)} />
+          <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} />
         ))}
       </div>
     </>
@@ -593,8 +602,8 @@ function Rules({ cloud }: { cloud: CloudStatus }) {
       <div className="share card">
         <h3>Live kitchen</h3>
         <p className="lede">
-          Official scores and family notes live in the shared kitchen ledger. Open a match on any
-          phone and everyone sees the same thread. Status: {cloud === "live" ? "connected" : cloud === "saving" ? "saving" : "viewing"}.
+          Official scores, tips and family notes live in the shared kitchen ledger. Open a match on
+          any phone and everyone sees the same tips and thread. Status: {cloud === "live" ? "connected" : cloud === "saving" ? "saving" : "viewing"}.
         </p>
         <p className="italic">
           If saving ever fails on a new phone, paste the family ledger key once. Andrew can send it
@@ -630,7 +639,7 @@ function MatchModal({
   match: Match;
   state: AppState;
   onClose: () => void;
-  onTip: (home: number, away: number) => void;
+  onTip: (home: number, away: number) => void | Promise<void>;
   onNote: (note: string) => void | Promise<void>;
 }) {
   const home = teamById[match.homeId];
@@ -642,6 +651,8 @@ function MatchModal({
   const [awayTip, setAwayTip] = useState(String(yourTip?.away ?? 0));
   const [note, setNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [savingTip, setSavingTip] = useState(false);
+  const matchTips = state.predictions[match.id] ?? [];
   const status = matchStatus(match.kickoff);
   const clash = home && away && ownerOf(home.id)?.id !== ownerOf(away.id)?.id;
 
@@ -692,11 +703,31 @@ function MatchModal({
                 <input inputMode="numeric" value={awayTip} onChange={(e) => setAwayTip(e.target.value)} />
               </div>
               <div className="actions">
-                <button className="primary" onClick={() => onTip(Number(homeTip) || 0, Number(awayTip) || 0)}>
-                  Lock {members.find((m) => m.id === state.you)?.name}'s tip
+                <button
+                  className="primary"
+                  disabled={savingTip}
+                  onClick={() => {
+                    setSavingTip(true);
+                    void Promise.resolve(onTip(Number(homeTip) || 0, Number(awayTip) || 0)).finally(() => setSavingTip(false));
+                  }}
+                >
+                  {savingTip ? "Sharing…" : `Lock ${members.find((m) => m.id === state.you)?.name}'s tip`}
                 </button>
               </div>
-              {yourTip && <p className="lede">Your tip: {yourTip.home}–{yourTip.away}{isFullTime(existing) ? "" : " · scored at full-time"}</p>}
+              <div className="family-tips">
+                <p className="lede">Everyone's tips · scored at full-time</p>
+                {members.map((member) => {
+                  const tip = matchTips.find((item) => item.memberId === member.id);
+                  const pts = tip && isFullTime(existing) ? predictionPoints(existing, tip) : null;
+                  return (
+                    <div className="family-tip" key={member.id}>
+                      <strong>{member.emoji} {member.name}</strong>
+                      <span>{tip ? `${tip.home}–${tip.away}` : "No tip yet"}</span>
+                      {pts != null && <small>{pts === 3 ? "Exact +3" : pts === 1 ? "Result +1" : "Miss"}</small>}
+                    </div>
+                  );
+                })}
+              </div>
               {existing?.phase === "ht" && <p className="badge live">Half-time is on the ladder — full-time will replace it</p>}
               {existing?.phase === "live" && <p className="badge live">Live from FIH — family points lock at half-time and full-time</p>}
               {status === "live" && !existing && <p className="badge live">Inside the live window — official score lands at half-time</p>}

@@ -1,6 +1,6 @@
 import { venues } from "./data/matches";
 import { teamById } from "./data/teams";
-import type { Match, MatchNote, MatchScore, Team } from "./data/types";
+import type { Match, MatchNote, MatchScore, Prediction, Team } from "./data/types";
 import { phaseLabel } from "./lib/scorePhase";
 import { ownerOf } from "./lib/owners";
 import { countdown, formatDate, formatTime, matchStatus, venueZone } from "./lib/time";
@@ -46,12 +46,14 @@ export function MatchCard({
   match,
   score,
   notes,
+  tips,
   timeZone,
   onOpen,
 }: {
   match: Match;
   score?: MatchScore;
   notes?: MatchNote[];
+  tips?: Prediction[];
   timeZone?: string;
   onOpen: () => void;
 }) {
@@ -79,6 +81,7 @@ export function MatchCard({
           {score?.phase === "ht" && <span className="badge live">Half time</span>}
           {status === "live" && !score && <span className="badge live">Live window</span>}
           {clash && <span className="badge clash">Family clash</span>}
+          {tips?.length ? <span className="badge">{tips.length} {tips.length === 1 ? "tip" : "tips"}</span> : null}
           {notes?.length ? <span className="badge">{notes.length} {notes.length === 1 ? "note" : "notes"}</span> : null}
           {left && status === "upcoming" && <span className="badge">{left}</span>}
         </div>

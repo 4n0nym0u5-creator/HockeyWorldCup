@@ -57,6 +57,10 @@ export function mergeNoteLists(a: MatchNote[] = [], b: MatchNote[] = []) {
   return [...map.values()].sort((left, right) => left.at - right.at);
 }
 
+function asMember(value: unknown): MemberId | null {
+  return MEMBERS.includes(value as MemberId) ? (value as MemberId) : null;
+}
+
 export function mergeNoteMaps(
   a: Record<string, MatchNote[]> = {},
   b: Record<string, MatchNote[]> = {},
@@ -67,8 +71,26 @@ export function mergeNoteMaps(
   return notes;
 }
 
-function asMember(value: unknown): MemberId | null {
-  return MEMBERS.includes(value as MemberId) ? (value as MemberId) : null;
+export function mergePredictionLists(a: StampedPrediction[] = [], b: StampedPrediction[] = []) {
+  const map = new Map<MemberId, StampedPrediction>();
+  for (const tip of [...a, ...b]) {
+    const memberId = asMember(tip.memberId);
+    if (!memberId || !Number.isFinite(tip.home) || !Number.isFinite(tip.away)) continue;
+    const stamped = { ...tip, memberId, at: tip.at ?? 0 };
+    const current = map.get(memberId);
+    if (!current || stamped.at >= current.at) map.set(memberId, stamped);
+  }
+  return [...map.values()];
+}
+
+export function mergePredictionMaps(
+  a: Record<string, StampedPrediction[]> = {},
+  b: Record<string, StampedPrediction[]> = {},
+) {
+  const ids = new Set([...Object.keys(a), ...Object.keys(b)]);
+  const predictions: Record<string, StampedPrediction[]> = {};
+  for (const id of ids) predictions[id] = mergePredictionLists(a[id], b[id]);
+  return predictions;
 }
 
 export function normalizeNotes(raw: unknown): Record<string, MatchNote[]> {
@@ -111,38 +133,63 @@ export async function pullLedger(): Promise<CloudDoc | null> {
   const res = await fetch(`${RAW}?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) return null;
   const doc = (await res.json()) as CloudDoc;
-  return { ...doc, notes: normalizeNotes(doc.notes) };
+  return { ...doc, notes: normalizeNotes(doc.notes), predictions: mergePredictionMaps(doc.predictions) };
 }
 
-export async function pullKitchenNotes(): Promise<Record<string, MatchNote[]>> {
+export async function pullKitchen(): Promise<{
+  notes: Record<string, MatchNote[]>;
+  predictions: Record<string, StampedPrediction[]>;
+}> {
+  const notes: Record<string, MatchNote[]> = {};
+  const predictions: Record<string, StampedPrediction[]> = {};
   try {
     const res = await fetch(`${KITCHEN}/json?poll=1&since=2d`, { cache: "no-store" });
-    if (!res.ok) return {};
-    const notes: Record<string, MatchNote[]> = {};
+    if (!res.ok) return { notes, predictions };
     const lines = (await res.text()).split("\n").map((line) => line.trim()).filter(Boolean);
     for (const line of lines) {
       try {
         const event = JSON.parse(line) as { id?: string; time?: number; message?: string };
-        const payload = JSON.parse(event.message ?? "{}") as Partial<MatchNote> & { matchId?: string; by?: string };
+        const payload = JSON.parse(event.message ?? "{}") as {
+          kind?: string;
+          matchId?: string;
+          by?: string;
+          memberId?: string;
+          text?: string;
+          id?: string;
+          home?: number;
+          away?: number;
+          at?: number;
+        };
         const memberId = asMember(payload.by ?? payload.memberId);
-        const text = String(payload.text ?? "").trim();
         const matchId = String(payload.matchId ?? "");
-        if (!memberId || !text || !matchId || text === "probe") continue;
+        if (!memberId || !matchId) continue;
+        const at = Number(payload.at) || Number(event.time) * 1000 || Date.now();
+        if (payload.kind === "tip" || (payload.kind !== "note" && Number.isFinite(payload.home) && Number.isFinite(payload.away) && !payload.text)) {
+          predictions[matchId] = mergePredictionLists(predictions[matchId], [{
+            memberId,
+            home: Number(payload.home),
+            away: Number(payload.away),
+            at,
+          }]);
+          continue;
+        }
+        const text = String(payload.text ?? "").trim();
+        if (!text || text === "probe") continue;
         const note: MatchNote = {
-          id: String(payload.id || event.id || `${memberId}:${payload.at ?? event.time ?? 0}:${text}`),
+          id: String(payload.id || event.id || `${memberId}:${at}:${text}`),
           memberId,
           text,
-          at: Number(payload.at) || Number(event.time) * 1000 || Date.now(),
+          at,
         };
         notes[matchId] = mergeNoteLists(notes[matchId], [note]);
       } catch {
-        // skip a bad live note
+        // skip a bad live kitchen item
       }
     }
-    return notes;
   } catch {
-    return {};
+    // live kitchen is a bonus; the ledger still holds
   }
+  return { notes, predictions };
 }
 
 export async function postKitchenNote(matchId: string, note: MatchNote) {
@@ -150,6 +197,7 @@ export async function postKitchenNote(matchId: string, note: MatchNote) {
     method: "POST",
     headers: { "Content-Type": "application/json", Title: `${note.memberId} ${matchId}` },
     body: JSON.stringify({
+      kind: "note",
       matchId,
       id: note.id,
       by: note.memberId,
@@ -159,6 +207,23 @@ export async function postKitchenNote(matchId: string, note: MatchNote) {
     }),
   });
   if (!res.ok) throw new Error("Could not share that note");
+}
+
+export async function postKitchenTip(matchId: string, tip: StampedPrediction) {
+  const res = await fetch(KITCHEN, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Title: `tip ${tip.memberId} ${matchId}` },
+    body: JSON.stringify({
+      kind: "tip",
+      matchId,
+      memberId: tip.memberId,
+      by: tip.memberId,
+      home: tip.home,
+      away: tip.away,
+      at: tip.at,
+    }),
+  });
+  if (!res.ok) throw new Error("Could not share that tip");
 }
 
 async function latestSha(token: string) {
@@ -220,22 +285,10 @@ export function mergeDocs(local: CloudDoc, remote: CloudDoc): CloudDoc {
     scores[id] = scores[id] ? pickScore(scores[id], score) : score;
   }
 
-  const predictions: CloudDoc["predictions"] = { ...remote.predictions };
-  const matchIds = new Set([...Object.keys(local.predictions), ...Object.keys(remote.predictions)]);
-  for (const matchId of matchIds) {
-    const map = new Map<MemberId, StampedPrediction>();
-    for (const tip of remote.predictions[matchId] ?? []) map.set(tip.memberId, tip);
-    for (const tip of local.predictions[matchId] ?? []) {
-      const current = map.get(tip.memberId);
-      if (!current || tip.at >= current.at) map.set(tip.memberId, tip);
-    }
-    predictions[matchId] = [...map.values()];
-  }
-
   return {
     updatedAt: Math.max(local.updatedAt, remote.updatedAt),
     scores,
-    predictions,
+    predictions: mergePredictionMaps(remote.predictions, local.predictions),
     notes: mergeNoteMaps(remote.notes, local.notes),
   };
 }

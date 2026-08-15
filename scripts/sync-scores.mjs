@@ -182,30 +182,53 @@ function normalizeNotes(raw = {}) {
   return notes;
 }
 
-async function pullKitchenNotes() {
+function mergePredictionLists(a = [], b = []) {
+  const map = new Map();
+  for (const tip of [...a, ...b]) {
+    if (!MEMBERS.has(tip.memberId) || !Number.isFinite(tip.home) || !Number.isFinite(tip.away)) continue;
+    const stamped = { ...tip, at: tip.at ?? 0 };
+    const current = map.get(tip.memberId);
+    if (!current || stamped.at >= current.at) map.set(tip.memberId, stamped);
+  }
+  return [...map.values()];
+}
+
+async function pullKitchen() {
   const res = await fetch(`${KITCHEN}/json?poll=1&since=2d`);
-  if (!res.ok) return {};
+  if (!res.ok) return { notes: {}, predictions: {} };
   const notes = {};
+  const predictions = {};
   for (const line of (await res.text()).split("\n").map((row) => row.trim()).filter(Boolean)) {
     try {
       const event = JSON.parse(line);
       const payload = JSON.parse(event.message ?? "{}");
       const memberId = payload.by ?? payload.memberId;
-      const text = String(payload.text ?? "").trim();
       const matchId = String(payload.matchId ?? "");
-      if (!MEMBERS.has(memberId) || !text || !matchId || text === "probe") continue;
+      if (!MEMBERS.has(memberId) || !matchId) continue;
+      const at = Number(payload.at) || Number(event.time) * 1000 || Date.now();
+      if (payload.kind === "tip" || (payload.kind !== "note" && Number.isFinite(payload.home) && Number.isFinite(payload.away) && !payload.text)) {
+        predictions[matchId] = mergePredictionLists(predictions[matchId], [{
+          memberId,
+          home: Number(payload.home),
+          away: Number(payload.away),
+          at,
+        }]);
+        continue;
+      }
+      const text = String(payload.text ?? "").trim();
+      if (!text || text === "probe") continue;
       const note = {
-        id: String(payload.id || event.id || `${memberId}:${payload.at ?? 0}:${text}`),
+        id: String(payload.id || event.id || `${memberId}:${at}:${text}`),
         memberId,
         text,
-        at: Number(payload.at) || Number(event.time) * 1000 || Date.now(),
+        at,
       };
       notes[matchId] = mergeNoteLists(notes[matchId], [note]);
     } catch {
-      // skip a bad live note
+      // skip a bad live kitchen item
     }
   }
-  return notes;
+  return { notes, predictions };
 }
 
 function notesChanged(before, after) {
@@ -240,24 +263,29 @@ async function main() {
   }
 
   const beforeNotes = JSON.stringify(doc.notes);
+  const beforeTips = JSON.stringify(doc.predictions);
   try {
-    const kitchen = await pullKitchenNotes();
-    for (const [matchId, list] of Object.entries(kitchen)) {
+    const kitchen = await pullKitchen();
+    for (const [matchId, list] of Object.entries(kitchen.notes)) {
       doc.notes[matchId] = mergeNoteLists(doc.notes[matchId], list);
     }
+    for (const [matchId, list] of Object.entries(kitchen.predictions)) {
+      doc.predictions[matchId] = mergePredictionLists(doc.predictions[matchId], list);
+    }
   } catch (error) {
-    console.error("Kitchen notes failed:", error.message);
+    console.error("Kitchen sync failed:", error.message);
   }
   const noteUpdates = notesChanged(JSON.parse(beforeNotes), doc.notes);
+  const tipUpdates = notesChanged(JSON.parse(beforeTips), doc.predictions);
 
-  if (!changed && !noteUpdates) {
-    console.log(`No official score or note changes (${jobs.length} matches polled)`);
+  if (!changed && !noteUpdates && !tipUpdates) {
+    console.log(`No official score, tip or note changes (${jobs.length} matches polled)`);
     return;
   }
 
   doc.updatedAt = Date.now();
   writeFileSync(ledgerPath, `${JSON.stringify(doc, null, 2)}\n`);
-  console.log(`Wrote ${changed} official score(s) and ${noteUpdates ? "new notes" : "no new notes"} to cloud/state.json`);
+  console.log(`Wrote ${changed} official score(s), ${tipUpdates ? "new tips" : "no new tips"}, ${noteUpdates ? "new notes" : "no new notes"} to cloud/state.json`);
 }
 
 await main();
