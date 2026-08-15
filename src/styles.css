@@ -272,7 +272,21 @@ h3 { font-size: 26px; }
 .live-dot.off i { background: #888; box-shadow: none; }
 .live-dot.saving i { background: var(--gold); }
 
+.match { cursor: pointer; }
 .match:hover { border-color: var(--gold); transform: translateY(-1px); }
+.refresh-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 6px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.06);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+.refresh-btn:disabled { opacity: 0.55; }
 .card { transition: 0.2s ease; }
 
 .when {
@@ -599,6 +613,7 @@ h3 { font-size: 26px; }
     grid-template-columns: 1fr;
   }
   .when { border: 0; text-align: left; padding-right: 0; }
+  .refresh-btn { width: auto; }
   .topbar { flex-direction: column; }
   .you-box { min-width: 0; width: 100%; }
   .score-box { text-align: left; }

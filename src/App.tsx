@@ -47,6 +47,7 @@ export function App() {
   const [tick, setTick] = useState(0);
   const [cloud, setCloud] = useState<CloudStatus>("offline");
   const skipPush = useRef(true);
+  const refreshKitchen = useRef(async () => {});
 
   useEffect(() => saveState(state), [state]);
   useEffect(() => {
@@ -76,6 +77,7 @@ export function App() {
         if (!cancelled) setCloud("offline");
       }
     };
+    refreshKitchen.current = () => hydrate(true);
     void hydrate(true);
     const id = setInterval(() => void hydrate(false), 15_000);
     const stopLive = subscribeKitchen((payload) => {
@@ -156,11 +158,11 @@ export function App() {
         ))}
       </nav>
 
-      {tab === "today" && <Today you={you} state={state} board={board} onOpen={setOpenId} tick={tick} />}
-      {tab === "schedule" && <Schedule you={you} state={state} onOpen={setOpenId} />}
+      {tab === "today" && <Today you={you} state={state} board={board} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} tick={tick} />}
+      {tab === "schedule" && <Schedule you={you} state={state} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} />}
       {tab === "rosters" && <Rosters />}
       {tab === "table" && <Ladder board={board} />}
-      {tab === "clashes" && <Clashes state={state} onOpen={setOpenId} />}
+      {tab === "clashes" && <Clashes state={state} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} />}
       {tab === "pools" && <Pools scores={state.scores} />}
       {tab === "facts" && <Facts />}
       {tab === "rules" && <Rules cloud={cloud} />}
@@ -215,12 +217,14 @@ function Today({
   state,
   board,
   onOpen,
+  onRefresh,
   tick,
 }: {
   you: FamilyMember;
   state: AppState;
   board: ReturnType<typeof scoreboard>;
   onOpen: (id: string) => void;
+  onRefresh: () => Promise<void>;
   tick: number;
 }) {
   void tick;
@@ -272,7 +276,7 @@ function Today({
           <div className="section-head"><h2>Up next</h2></div>
           <div className="stack">
             {upcoming.map((match) => (
-              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} />
+              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} onRefresh={onRefresh} />
             ))}
           </div>
         </div>
@@ -337,10 +341,12 @@ function Schedule({
   you,
   state,
   onOpen,
+  onRefresh,
 }: {
   you: FamilyMember;
   state: AppState;
   onOpen: (id: string) => void;
+  onRefresh: () => Promise<void>;
 }) {
   const [gender, setGender] = useState<"all" | "M" | "W">("all");
   const [mine, setMine] = useState(false);
@@ -385,7 +391,7 @@ function Schedule({
           <div className="day-label">{formatDate(dayMatches[0].kickoff)}</div>
           <div className="stack">
             {dayMatches.map((match) => (
-              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} />
+              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} onRefresh={onRefresh} />
             ))}
           </div>
         </div>
@@ -495,7 +501,7 @@ function Ladder({ board }: { board: ReturnType<typeof scoreboard> }) {
   );
 }
 
-function Clashes({ state, onOpen }: { state: AppState; onOpen: (id: string) => void }) {
+function Clashes({ state, onOpen, onRefresh }: { state: AppState; onOpen: (id: string) => void; onRefresh: () => Promise<void> }) {
   const clashMatches = matches.filter((match) => {
     const a = ownerOf(match.homeId);
     const b = ownerOf(match.awayId);
@@ -511,7 +517,7 @@ function Clashes({ state, onOpen }: { state: AppState; onOpen: (id: string) => v
       </div>
       <div className="stack">
         {clashMatches.map((match) => (
-          <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} />
+          <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} onRefresh={onRefresh} />
         ))}
       </div>
     </>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { venues } from "./data/matches";
 import { teamById } from "./data/teams";
 import type { Match, MatchNote, MatchScore, Prediction, Team } from "./data/types";
@@ -49,6 +50,7 @@ export function MatchCard({
   tips,
   timeZone,
   onOpen,
+  onRefresh,
 }: {
   match: Match;
   score?: MatchScore;
@@ -56,6 +58,7 @@ export function MatchCard({
   tips?: Prediction[];
   timeZone?: string;
   onOpen: () => void;
+  onRefresh: () => Promise<void>;
 }) {
   const home = teamById[match.homeId];
   const away = teamById[match.awayId];
@@ -65,13 +68,38 @@ export function MatchCard({
   const awayOwner = away ? ownerOf(away.id) : null;
   const clash = homeOwner && awayOwner && homeOwner.id !== awayOwner.id;
   const left = countdown(match.kickoff);
+  const [refreshing, setRefreshing] = useState(false);
 
   return (
-    <button className="card match" onClick={onOpen} style={{ width: "100%", textAlign: "left" }}>
+    <div
+      className="card match"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      style={{ width: "100%", textAlign: "left" }}
+    >
       <div className="when">
         <div className="clock">{formatTime(match.kickoff, timeZone)}</div>
         <small>{formatDate(match.kickoff, timeZone)}</small>
         <small>{venue.short}</small>
+        <button
+          type="button"
+          className="refresh-btn"
+          disabled={refreshing}
+          onClick={(event) => {
+            event.stopPropagation();
+            setRefreshing(true);
+            void onRefresh().finally(() => setRefreshing(false));
+          }}
+        >
+          {refreshing ? "Refreshing" : "Refresh"}
+        </button>
       </div>
       <div>
         <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
@@ -105,7 +133,7 @@ export function MatchCard({
           <div className="vs">VS</div>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 
