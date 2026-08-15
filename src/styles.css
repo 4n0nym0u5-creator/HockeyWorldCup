@@ -338,13 +338,47 @@ h3 { font-size: 26px; }
 }
 
 .score-box {
-  min-width: 86px;
+  min-width: 92px;
   text-align: center;
   font-family: "Bebas Neue", sans-serif;
   font-size: 34px;
   line-height: 1;
   align-self: center;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
 }
+.score-side small {
+  display: block;
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+.score-side b { display: block; font-weight: 400; }
+.official-board {
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 8px;
+  padding: 16px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  font-size: 56px;
+}
+.official-board .ht-line { grid-column: 1 / -1; }
+.winner-callout {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+}
+.winner-callout strong { display: block; font-size: 16px; }
+.winner-callout span { display: block; margin-top: 3px; font-size: 13px; opacity: 0.75; }
 
 .vs {
   opacity: 0.45;

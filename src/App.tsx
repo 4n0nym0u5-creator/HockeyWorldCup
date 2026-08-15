@@ -22,8 +22,8 @@ import { predictionPoints, scoreboard } from "./lib/scoring";
 import { poolTable } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
-import { isFullTime, phaseLabel } from "./lib/scorePhase";
-import { Flag, LocalNote, MatchCard, TeamMark } from "./ui";
+import { isFullTime } from "./lib/scorePhase";
+import { Flag, LocalNote, MatchCard, OfficialScore, TeamMark, WinnerCallout } from "./ui";
 
 type Tab = "today" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
 
@@ -718,15 +718,12 @@ function MatchModal({
             <TeamMark team={away} big />
           </div>
 
+          <OfficialScore match={match} score={existing} big />
+          <WinnerCallout match={match} score={existing} />
+          {existing?.status && <p className="lede">{existing.source === "fih" ? "Official FIH" : "Family"} · {existing.status}</p>}
+
           {home && away && (
             <>
-              {existing && (
-                <p className="lede">
-                  {existing.source === "fih" ? "Official FIH" : "Family"} {phaseLabel(existing)} {existing.home}–{existing.away}
-                  {existing.htHome != null && existing.phase !== "ht" ? ` · HT ${existing.htHome}–${existing.htAway}` : ""}
-                  {existing.status ? ` · ${existing.status}` : ""}
-                </p>
-              )}
               <div className="score-inputs">
                 <input inputMode="numeric" value={homeTip} onChange={(e) => setHomeTip(e.target.value)} />
                 <span className="vs">TIP</span>

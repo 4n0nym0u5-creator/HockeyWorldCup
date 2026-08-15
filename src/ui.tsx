@@ -2,8 +2,9 @@ import { useState } from "react";
 import { venues } from "./data/matches";
 import { teamById } from "./data/teams";
 import type { Match, MatchNote, MatchScore, Prediction, Team } from "./data/types";
-import { phaseLabel } from "./lib/scorePhase";
+import { matchOutcome } from "./lib/outcome";
 import { ownerOf } from "./lib/owners";
+import { phaseLabel } from "./lib/scorePhase";
 import { countdown, formatDate, formatTime, matchStatus, venueZone } from "./lib/time";
 
 export function Flag({ code, alt }: { code: string; alt: string }) {
@@ -120,6 +121,7 @@ export function MatchCard({
           <TeamMark team={away} fact />
         </div>
         {match.note && <p className="italic" style={{ margin: "10px 0 0", fontSize: 14 }}>{match.note}</p>}
+        <WinnerCallout match={match} score={score} />
         {familyNotes.length > 0 && (
           <div className="card-notes">
             {familyNotes.slice(-3).map((item) => (
@@ -128,20 +130,53 @@ export function MatchCard({
           </div>
         )}
       </div>
-      <div className="score-box">
-        {score ? (
-          <>
-            {score.home}
-            <div className="vs">{phaseLabel(score)}</div>
-            {score.away}
-            {score.phase !== "ht" && score.htHome != null && score.htAway != null && (
-              <div className="ht-line">HT {score.htHome}–{score.htAway}</div>
-            )}
-          </>
-        ) : (
-          <div className="vs">VS</div>
-        )}
+      <OfficialScore match={match} score={score} />
+    </div>
+  );
+}
+
+export function OfficialScore({
+  match,
+  score,
+  big,
+}: {
+  match: Match;
+  score?: MatchScore;
+  big?: boolean;
+}) {
+  const home = teamById[match.homeId];
+  const away = teamById[match.awayId];
+  if (!score) {
+    return <div className="score-box"><div className="vs">VS</div></div>;
+  }
+  return (
+    <div className={`score-box${big ? " official-board" : ""}`}>
+      <div className="score-side">
+        <small>{home?.short ?? "HOME"}</small>
+        <b>{score.home}</b>
       </div>
+      <div className="vs">{score.source === "fih" ? `Official ${phaseLabel(score)}` : phaseLabel(score)}</div>
+      <div className="score-side">
+        <small>{away?.short ?? "AWAY"}</small>
+        <b>{score.away}</b>
+      </div>
+      {score.phase !== "ht" && score.htHome != null && score.htAway != null && (
+        <div className="ht-line">HT {score.htHome}–{score.htAway}</div>
+      )}
+    </div>
+  );
+}
+
+export function WinnerCallout({ match, score }: { match: Match; score?: MatchScore }) {
+  const outcome = matchOutcome(match, score);
+  if (!outcome) return null;
+  return (
+    <div
+      className={`winner-callout${outcome.kind === "win" ? " win" : " draw"}`}
+      style={outcome.owner ? { borderColor: outcome.owner.color, background: `${outcome.owner.color}22` } : undefined}
+    >
+      <strong>{outcome.headline}</strong>
+      <span>{outcome.detail}</span>
     </div>
   );
 }
