@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1786867970337,
+  "updatedAt": 1786870241287,
   "scores": {
     "w01": {
       "home": 2,
@@ -82,12 +82,14 @@
       "at": 1786827490831
     },
     "w05": {
-      "home": 0,
+      "home": 2,
       "away": 0,
+      "htHome": 0,
+      "htAway": 0,
       "phase": "live",
       "source": "fih",
-      "status": "1st Quarter",
-      "at": 1786867970205
+      "status": "2nd Quarter",
+      "at": 1786870240907
     }
   },
   "predictions": {
@@ -289,6 +291,18 @@
         "home": 2,
         "away": 0,
         "at": 1786838818964
+      },
+      {
+        "memberId": "hugo",
+        "home": 3,
+        "away": 0,
+        "at": 1786869038940
+      },
+      {
+        "memberId": "georgia",
+        "home": 2,
+        "away": 0,
+        "at": 1786869083859
       }
     ],
     "w06": [
@@ -309,6 +323,18 @@
         "home": 2,
         "away": 1,
         "at": 1786838858085
+      },
+      {
+        "memberId": "hugo",
+        "home": 3,
+        "away": 4,
+        "at": 1786869045654
+      },
+      {
+        "memberId": "georgia",
+        "home": 2,
+        "away": 0,
+        "at": 1786869097734
       }
     ],
     "m06": [
@@ -329,6 +355,18 @@
         "home": 1,
         "away": 1,
         "at": 1786838893445
+      },
+      {
+        "memberId": "hugo",
+        "home": 1,
+        "away": 0,
+        "at": 1786869051972
+      },
+      {
+        "memberId": "georgia",
+        "home": 1,
+        "away": 0,
+        "at": 1786869110044
       }
     ],
     "m07": [
@@ -349,6 +387,18 @@
         "home": 4,
         "away": 1,
         "at": 1786838919117
+      },
+      {
+        "memberId": "hugo",
+        "home": 5,
+        "away": 0,
+        "at": 1786869111860
+      },
+      {
+        "memberId": "georgia",
+        "home": 3,
+        "away": 0,
+        "at": 1786869123126
       }
     ],
     "w07": [
@@ -369,6 +419,12 @@
         "home": 2,
         "away": 0,
         "at": 1786838936521
+      },
+      {
+        "memberId": "georgia",
+        "home": 2,
+        "away": 0,
+        "at": 1786869143531
       }
     ]
   },
