@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1786878614635,
+  "updatedAt": 1786880246056,
   "scores": {
     "w01": {
       "home": 2,
@@ -96,10 +96,18 @@
       "away": 1,
       "htHome": 1,
       "htAway": 0,
+      "phase": "ft",
+      "source": "fih",
+      "status": "Official",
+      "at": 1786880245696
+    },
+    "w06": {
+      "home": 1,
+      "away": 1,
       "phase": "live",
       "source": "fih",
-      "status": "4th Quarter",
-      "at": 1786878613018
+      "status": "2nd Quarter",
+      "at": 1786880245942
     }
   },
   "predictions": {
@@ -407,8 +415,8 @@
       {
         "memberId": "georgia",
         "home": 3,
-        "away": 0,
-        "at": 1786869123126
+        "away": 1,
+        "at": 1786878777682
       }
     ],
     "w07": [
