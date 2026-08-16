@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1786912442296,
+  "updatedAt": 1786917060388,
   "scores": {
     "w01": {
       "home": 2,
@@ -495,6 +495,182 @@
         "home": 2,
         "away": 0,
         "at": 1786869143531
+      }
+    ],
+    "w09": [
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 1,
+        "at": 1786915824082
+      },
+      {
+        "memberId": "emily",
+        "home": 2,
+        "away": 1,
+        "at": 1786915950122
+      },
+      {
+        "memberId": "andrew",
+        "home": 3,
+        "away": 2,
+        "at": 1786915995130
+      },
+      {
+        "memberId": "hugo",
+        "home": 6,
+        "away": 0,
+        "at": 1786917010373
+      }
+    ],
+    "w10": [
+      {
+        "memberId": "nicole",
+        "home": 3,
+        "away": 0,
+        "at": 1786915834712
+      },
+      {
+        "memberId": "emily",
+        "home": 2,
+        "away": 1,
+        "at": 1786915969943
+      },
+      {
+        "memberId": "andrew",
+        "home": 2,
+        "away": 0,
+        "at": 1786916007394
+      }
+    ],
+    "m09": [
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 1,
+        "at": 1786915858898
+      },
+      {
+        "memberId": "emily",
+        "home": 2,
+        "away": 1,
+        "at": 1786915992139
+      },
+      {
+        "memberId": "andrew",
+        "home": 3,
+        "away": 0,
+        "at": 1786916022770
+      },
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 4,
+        "at": 1786917026490
+      }
+    ],
+    "m10": [
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 0,
+        "at": 1786915869554
+      },
+      {
+        "memberId": "emily",
+        "home": 2,
+        "away": 1,
+        "at": 1786916018590
+      },
+      {
+        "memberId": "andrew",
+        "home": 4,
+        "away": 0,
+        "at": 1786916035749
+      },
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 2,
+        "at": 1786917033903
+      }
+    ],
+    "m11": [
+      {
+        "memberId": "nicole",
+        "home": 0,
+        "away": 1,
+        "at": 1786915878513
+      },
+      {
+        "memberId": "andrew",
+        "home": 4,
+        "away": 2,
+        "at": 1786916061091
+      },
+      {
+        "memberId": "hugo",
+        "home": 2,
+        "away": 0,
+        "at": 1786917043517
+      }
+    ],
+    "w11": [
+      {
+        "memberId": "nicole",
+        "home": 3,
+        "away": 2,
+        "at": 1786915896894
+      },
+      {
+        "memberId": "emily",
+        "home": 3,
+        "away": 2,
+        "at": 1786916041569
+      },
+      {
+        "memberId": "andrew",
+        "home": 2,
+        "away": 1,
+        "at": 1786916089159
+      },
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 3,
+        "at": 1786917050487
+      }
+    ],
+    "m12": [
+      {
+        "memberId": "emily",
+        "home": 2,
+        "away": 3,
+        "at": 1786916063868
+      }
+    ],
+    "w13": [
+      {
+        "memberId": "emily",
+        "home": 1,
+        "away": 2,
+        "at": 1786916088766
+      }
+    ],
+    "m13": [
+      {
+        "memberId": "emily",
+        "home": 1,
+        "away": 2,
+        "at": 1786916100351
+      }
+    ],
+    "m18": [
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 2,
+        "at": 1786916752331
       }
     ]
   },
