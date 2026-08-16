@@ -245,7 +245,7 @@ function PrizeShot({ tall }: { tall?: boolean }) {
         src={maraudersCup}
         alt="Andrew, Nicole, Georgia, Emily and Hugo in Marauders jerseys reaching for the gold cup on turf"
       />
-      <figcaption>The Marauders — last time this family lifted a cup together.</figcaption>
+      <figcaption>The Marauders — they all want the shiny gold thing.</figcaption>
     </figure>
   );
 }
