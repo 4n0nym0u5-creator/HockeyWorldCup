@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import maraudersCup from "./assets/marauders-cup.png";
 import { tournamentFacts, watchTips } from "./data/facts";
 import { matches, venues } from "./data/matches";
 import { members } from "./data/members";
+import { takeaways } from "./data/prize";
 import { teamById, teams } from "./data/teams";
 import type { FamilyMember, Match, MatchScore, MemberId } from "./data/types";
 import {
@@ -137,8 +139,8 @@ export function App() {
             <p className="eyebrow">Family Cup · Belgium & Netherlands</p>
             <h1>FIH World Cup 2026</h1>
             <p className="lede">
-              Andrew, Nicole, Georgia, Emily and Hugo split every team. Official scores land at
-              half-time and full-time, and the family ladder moves with them.
+              Five houses. One little gold cup. The winner chooses Hungry Jack's, McDonald's or KFC
+              for the family takeaway — and everyone else gets in the car.
             </p>
           </div>
         </div>
@@ -236,6 +238,48 @@ export function App() {
   );
 }
 
+function PrizeShot({ tall }: { tall?: boolean }) {
+  return (
+    <figure className={`prize-shot${tall ? " tall" : ""}`}>
+      <img
+        src={maraudersCup}
+        alt="Andrew, Nicole, Georgia, Emily and Hugo in Marauders jerseys reaching for the gold cup on turf"
+      />
+      <figcaption>The Marauders — last time this family lifted a cup together.</figcaption>
+    </figure>
+  );
+}
+
+function TakeawayRow() {
+  return (
+    <div className="takeaway-row">
+      {takeaways.map((shop) => (
+        <div className={`takeaway-chip ${shop.id}`} key={shop.id}>
+          <strong>{shop.name}</strong>
+          <span>{shop.tag}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SpoilsCard({ leaderName }: { leaderName?: string }) {
+  return (
+    <div className="card spoils">
+      <p className="eyebrow">The spoils</p>
+      <h3>The cup, then the car park</h3>
+      <p className="lede">
+        First on the ladder lifts the little gold trophy and chooses Hungry Jack's, McDonald's or KFC
+        for the family takeaway. Everyone else gets in the car. Nobody vetoes the fries.
+      </p>
+      <TakeawayRow />
+      {leaderName && (
+        <p className="italic spoils-lead">{leaderName} currently holds the keys to the drive-through.</p>
+      )}
+    </div>
+  );
+}
+
 function Today({
   you,
   state,
@@ -268,25 +312,26 @@ function Today({
 
   return (
     <>
-      <section className="hero">
-        <div className="hero-grid">
-          <div>
-            <div className="kicker">15–30 August · Opening festival</div>
-            <h2 style={{ fontSize: "clamp(42px, 8vw, 84px)", marginTop: 10 }}>
-              Five houses.<br />Thirty-two nations.
-            </h2>
-            <p className="lede">
-              {you.name}, you own {you.teamIds.length} sides. Your next watch is highlighted below.
-              Family clashes pay extra. Official FIH scores lock in at half-time and full-time.
-            </p>
-          </div>
-          <div className="card fact">{fact}</div>
+      <section className="hero prize-hero">
+        <PrizeShot tall />
+        <div>
+          <div className="kicker">15–30 August · play for the drive-through</div>
+          <h2 style={{ fontSize: "clamp(42px, 8vw, 84px)", marginTop: 10 }}>
+            Win the cup.<br />Pick the takeaway.
+          </h2>
+          <p className="lede">
+            {you.name}, you own {you.teamIds.length} sides. The house on top when the World Cup ends
+            lifts the little gold trophy and chooses Hungry Jack's, Maccas or KFC for everyone.
+            Family clashes pay extra. Official scores lock at half-time and full-time.
+          </p>
+          <TakeawayRow />
+          <p className="italic" style={{ marginTop: 14 }}>{fact}</p>
         </div>
         <div className="stat-row">
           <div className="stat"><b>{youRow?.total ?? 0}</b><span>{you.name}'s points</span></div>
           <div className="stat"><b>{Object.keys(state.scores).length}</b><span>Official results</span></div>
           <div className="stat"><b>{yours.length}</b><span>Your next matches</span></div>
-          <div className="stat"><b>{board[0] ? members.find((m) => m.id === board[0].memberId)?.name : "—"}</b><span>Current leader</span></div>
+          <div className="stat"><b>{board[0] ? members.find((m) => m.id === board[0].memberId)?.name : "—"}</b><span>Keys to the takeaway</span></div>
         </div>
       </section>
 
@@ -319,6 +364,7 @@ function Today({
           </div>
         </div>
         <div className="stack">
+          <SpoilsCard leaderName={board[0] ? members.find((m) => m.id === board[0].memberId)?.name : undefined} />
           <MiniLadder board={board} />
           <YourHouse you={you} />
         </div>
@@ -332,7 +378,9 @@ function MiniLadder({ board }: { board: ReturnType<typeof scoreboard> }) {
     <div className="panel" style={{ padding: 8 }}>
       <div className="section-head" style={{ padding: "8px 8px 0" }}>
         <h3>Live ladder</h3>
-        {board.some((row) => row.provisional) && <p className="lede">Includes half-time points</p>}
+        {board.some((row) => row.provisional)
+          ? <p className="lede">Includes half-time points</p>
+          : <p className="lede">First to the cup picks the takeaway</p>}
       </div>
       {board.map((row, i) => {
         const member = members.find((m) => m.id === row.memberId)!;
@@ -506,13 +554,19 @@ function Rosters() {
 }
 
 function Ladder({ board }: { board: ReturnType<typeof scoreboard> }) {
+  const leader = board[0] ? members.find((m) => m.id === board[0].memberId) : undefined;
   return (
     <>
+      <div className="prize-rules" style={{ marginBottom: 22 }}>
+        <PrizeShot />
+        <SpoilsCard leaderName={leader?.name} />
+      </div>
       <div className="section-head">
         <div>
           <h2>The family ladder</h2>
           <p className="lede">
             Half-time scores count as they land; full-time replaces them. Tips wait for the final whistle.
+            First house lifts the little gold cup and chooses Hungry Jack's, McDonald's or KFC.
             {board.some((row) => row.provisional) ? " Some points are still provisional until full-time." : ""}
           </p>
         </div>
@@ -630,8 +684,11 @@ function Facts() {
       <div className="section-head">
         <div>
           <h2>Tournament briefing</h2>
-          <p className="lede">Enough to sound dangerous at dinner. The real gold is on each team card in Houses.</p>
+          <p className="lede">Enough to sound dangerous at dinner — and at the drive-through. The real gold is on each team card in Houses.</p>
         </div>
+      </div>
+      <div className="card fact" style={{ marginBottom: 12 }}>
+        The prize is not a Pro League contract. The winner lifts the little gold cup the Marauders last reached for on turf, then picks Hungry Jack's, McDonald's or KFC. The rest of the family eats whatever comes out of the bag.
       </div>
       <div className="stack">
         {tournamentFacts.map((fact) => <div className="card fact" key={fact}>{fact}</div>)}
@@ -656,6 +713,28 @@ function Facts() {
 function Rules({ cloud }: { cloud: CloudStatus }) {
   const [token, setToken] = useState(() => localStorage.getItem("family-cup-ledger-token") ?? "");
   return (
+    <>
+    <div className="prize-rules">
+      <PrizeShot />
+      <div className="card" style={{ padding: 20 }}>
+        <p className="eyebrow">What you are playing for</p>
+        <h2>One cup. One takeaway.</h2>
+        <p className="lede">
+          The winner of the Family Cup lifts the little gold trophy — the same cup this lot last
+          reached for in Marauders purple — and chooses the family takeaway. Hungry Jack's,
+          McDonald's or KFC. No split orders. No “can we just get a salad.” The winner's word is
+          the menu.
+        </p>
+        <div className="stack" style={{ marginTop: 14 }}>
+          {takeaways.map((shop) => (
+            <div className={`takeaway-chip ${shop.id}`} key={shop.id} style={{ borderRadius: 16 }}>
+              <strong>{shop.name}</strong>
+              <span>{shop.line}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
     <div className="grid-2">
       <div className="card" style={{ padding: 20 }}>
         <h2>How you score</h2>
@@ -665,8 +744,9 @@ function Rules({ cloud }: { cloud: CloudStatus }) {
           <li>Family clash win +2 — the sibling tax</li>
           <li>Top of a pool +5 · second +4</li>
           <li>Semi-final appearance +8 · final +12 · champion +20 · bronze +6</li>
-          <li>Everyone tips: exact score +3 · correct result +1 — lock before kick-off, scored at full-time. Late tips stay visible but score nothing.</li>
+          <li>Everyone tips: exact score +3 · correct result +1 — lock before kick-off, scored at full-time</li>
           <li>Official FIH scores write themselves at half-time and full-time, and the ladder updates at the same moment</li>
+          <li>The house on top at the end lifts the cup and picks Hungry Jack's, Maccas or KFC</li>
         </ul>
         <p className="italic">Andrew and Hugo have seven teams because 32 does not divide by five. Their extras are the leftover lower-ranked sides, so the quality split stays honest.</p>
       </div>
@@ -697,6 +777,7 @@ function Rules({ cloud }: { cloud: CloudStatus }) {
         </button>
       </div>
     </div>
+    </>
   );
 }
 

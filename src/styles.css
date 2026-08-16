@@ -181,6 +181,91 @@ h3 { font-size: 26px; }
   align-items: end;
 }
 
+.prize-hero {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 22px;
+  align-items: center;
+}
+.prize-hero .stat-row { grid-column: 1 / -1; }
+
+.prize-shot {
+  margin: 0;
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+.prize-shot img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: 50% 42%;
+}
+.prize-shot.tall img { aspect-ratio: 5 / 4; }
+.prize-shot figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 36px 14px 12px;
+  background: linear-gradient(transparent, rgba(7, 20, 15, 0.9));
+  font-family: Fraunces, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--gold-2);
+}
+
+.takeaway-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.takeaway-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.06);
+}
+.takeaway-chip strong { display: block; font-size: 13px; }
+.takeaway-chip span {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+.takeaway-chip.hungry-jacks {
+  border-color: rgba(255, 140, 0, 0.45);
+  background: rgba(255, 107, 0, 0.16);
+}
+.takeaway-chip.maccas {
+  border-color: rgba(232, 195, 106, 0.55);
+  background: rgba(232, 195, 106, 0.14);
+}
+.takeaway-chip.kfc {
+  border-color: rgba(214, 40, 40, 0.5);
+  background: rgba(214, 40, 40, 0.16);
+}
+
+.spoils { padding: 16px 18px; }
+.spoils .lede { max-width: none; }
+.spoils-lead { margin: 14px 0 0; }
+
+.prize-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+  align-items: stretch;
+}
+.prize-rules .prize-shot { height: 100%; }
+.prize-rules .prize-shot img { height: 100%; min-height: 240px; }
+
 .kicker {
   display: inline-flex;
   gap: 8px;
@@ -686,7 +771,7 @@ h3 { font-size: 26px; }
 @media (max-width: 900px) {
   .app { width: min(1240px, calc(100% - 20px)); padding-top: 14px; }
   .hero { padding: 18px; }
-  .hero-grid, .grid-2, .grid-3, .grid-5, .stat-row, .match {
+  .hero-grid, .prize-hero, .prize-rules, .grid-2, .grid-3, .grid-5, .stat-row, .match {
     grid-template-columns: 1fr;
   }
   .when { border: 0; text-align: left; padding-right: 0; }

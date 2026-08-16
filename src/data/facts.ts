@@ -17,6 +17,7 @@ export const tournamentFacts = [
   "Belgium men sit world No. 1 after winning the Pro League by a distance. They host France on opening night in Wavre.",
   "A field hockey match is four 15-minute quarters. Wins are worth three points, draws one — same as football, faster than football.",
   "The women's final is 29 August in Amstelveen. The men's final is 30 August in Wavre.",
+  "The Family Cup prize is a little gold trophy and the right to pick Hungry Jack's, McDonald's or KFC for the family. The rest of you eat whatever comes out of the bag.",
 ];
 
 export const watchTips = [
