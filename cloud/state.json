@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1787172492481,
+  "updatedAt": 1787174115552,
   "scores": {
     "w01": {
       "home": 2,
@@ -1137,6 +1137,90 @@
         "home": 0,
         "away": 2,
         "at": 1787118692813
+      }
+    ],
+    "w21": [
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 2,
+        "at": 1787173485015
+      },
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 0,
+        "at": 1787173578425
+      }
+    ],
+    "m21": [
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 1,
+        "at": 1787173495360
+      },
+      {
+        "memberId": "nicole",
+        "home": 3,
+        "away": 0,
+        "at": 1787173598244
+      }
+    ],
+    "m22": [
+      {
+        "memberId": "hugo",
+        "home": 2,
+        "away": 0,
+        "at": 1787173504198
+      },
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 3,
+        "at": 1787173622856
+      }
+    ],
+    "w22": [
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 2,
+        "at": 1787173513579
+      },
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 3,
+        "at": 1787173648341
+      }
+    ],
+    "w23": [
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 2,
+        "at": 1787173526145
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 1,
+        "at": 1787173662788
+      }
+    ],
+    "m23": [
+      {
+        "memberId": "hugo",
+        "home": 1,
+        "away": 0,
+        "at": 1787173530527
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 2,
+        "at": 1787173675457
       }
     ]
   },
