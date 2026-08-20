@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1787218634663,
+  "updatedAt": 1787220365790,
   "scores": {
     "w01": {
       "home": 2,
@@ -414,10 +414,12 @@
     "m21": {
       "home": 0,
       "away": 1,
+      "htHome": 0,
+      "htAway": 1,
       "phase": "live",
       "source": "fih",
-      "status": "2nd Quarter",
-      "at": 1787218633609
+      "status": "3rd Quarter",
+      "at": 1787220364117
     }
   },
   "predictions": {
