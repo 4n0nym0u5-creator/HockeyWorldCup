@@ -24,13 +24,14 @@ import { predictionPoints, scoreboard } from "./lib/scoring";
 import { poolTable } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
-import { isFullTime } from "./lib/scorePhase";
+import { isFullTime, isInPlay } from "./lib/scorePhase";
 import { Flag, LocalNote, MatchCard, OfficialScore, TeamMark, TipCallout, WinnerCallout } from "./ui";
 
-type Tab = "today" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
+type Tab = "today" | "live" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "today", label: "Up Next" },
+  { id: "live", label: "Live Games" },
   { id: "schedule", label: "Fixtures" },
   { id: "rosters", label: "Houses" },
   { id: "table", label: "Ladder" },
@@ -184,6 +185,7 @@ export function App() {
       </nav>
 
       {tab === "today" && <Today you={you} state={state} board={board} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} tick={tick} />}
+      {tab === "live" && <LiveGames state={state} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} tick={tick} />}
       {tab === "schedule" && <Schedule you={you} state={state} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} />}
       {tab === "rosters" && <Rosters />}
       {tab === "table" && <Ladder board={board} />}
@@ -369,6 +371,63 @@ function Today({
           <YourHouse you={you} />
         </div>
       </div>
+    </>
+  );
+}
+
+function LiveGames({
+  state,
+  onOpen,
+  onRefresh,
+  tick,
+}: {
+  state: AppState;
+  onOpen: (id: string) => void;
+  onRefresh: () => Promise<void>;
+  tick: number;
+}) {
+  void tick;
+  const now = Date.now();
+  const live = matches.filter((match) => isInPlay(match.kickoff, state.scores[match.id], now));
+  const nextUp = matches.find((match) => new Date(match.kickoff).getTime() > now);
+  const nextHome = nextUp ? teamById[nextUp.homeId] : undefined;
+  const nextAway = nextUp ? teamById[nextUp.awayId] : undefined;
+
+  return (
+    <>
+      <div className="section-head">
+        <div>
+          <h2>Live games</h2>
+          <p className="lede">
+            {live.length
+              ? "On the pitch right now. Official scores land at half-time and full-time."
+              : "Nothing is live at this second."}
+          </p>
+        </div>
+      </div>
+      {live.length ? (
+        <div className="stack">
+          {live.map((match) => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              score={state.scores[match.id]}
+              notes={state.notes[match.id]}
+              tips={state.predictions[match.id]}
+              onOpen={() => onOpen(match.id)}
+              onRefresh={onRefresh}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="card" style={{ padding: 20 }}>
+          <p className="lede" style={{ maxWidth: "none", margin: 0 }}>
+            {nextUp && nextHome && nextAway
+              ? `Next up is ${nextHome.name} vs ${nextAway.name} at ${formatDateTime(nextUp.kickoff)}. Tip it from Up Next before kick-off.`
+              : "The World Cup is done."}
+          </p>
+        </div>
+      )}
     </>
   );
 }

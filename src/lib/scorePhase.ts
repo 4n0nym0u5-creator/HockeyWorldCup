@@ -4,6 +4,15 @@ export function isFullTime(score?: MatchScore) {
   return Boolean(score && (score.phase === "ft" || !score.phase));
 }
 
+/** Kick-off has happened, FIH has not written full-time, and we are still inside the live window. */
+export function isInPlay(kickoff: string, score?: MatchScore, now = Date.now()) {
+  if (isFullTime(score)) return false;
+  const start = new Date(kickoff).getTime();
+  if (Number.isNaN(start) || now < start) return false;
+  if (score?.phase === "live" || score?.phase === "ht") return true;
+  return now < start + 120 * 60_000;
+}
+
 export function isProvisional(score?: MatchScore) {
   return Boolean(
     score &&
