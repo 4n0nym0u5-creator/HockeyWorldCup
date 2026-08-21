@@ -1,3 +1,5 @@
+import { takeawayLine } from "./prize";
+
 export const tournamentFacts = [
   "This is the first time the men's World Cup is co-hosted, and the first combined men's and women's World Cup in Belgium and the Netherlands.",
   "The 2026 edition dropped quarter-finals. Top two from each opening pool go into a second group stage; results against teams you already played carry over.",
@@ -17,7 +19,7 @@ export const tournamentFacts = [
   "Belgium men sit world No. 1 after winning the Pro League by a distance. They host France on opening night in Wavre.",
   "A field hockey match is four 15-minute quarters. Wins are worth three points, draws one — same as football, faster than football.",
   "The women's final is 29 August in Amstelveen. The men's final is 30 August in Wavre.",
-  "The Family Cup prize is a little gold trophy and the right to pick KFC, McDonald's, Hungry Jack's, Ciao Belli in Balgowlah, or Pocket Pizza in Manly. The rest of you eat whatever comes out of the bag.",
+  `The Family Cup prize is a little gold trophy and the right to pick ${takeawayLine}. The rest of you eat whatever comes out of the bag.`,
   "Second round is locked: women's Pool E is Netherlands, Australia, China and India. Pool F is Argentina, Germany, Belgium and Spain. Top two from each go to the semis.",
 ];
 
