@@ -213,7 +213,14 @@ async function fetchLedger(href: string, ms = 4000): Promise<CloudDoc | null> {
 }
 
 export async function pullLedger(): Promise<CloudDoc | null> {
-  for (const url of LEDGER_URLS) {
+  // Same-origin ledger.json is a build snapshot. Score-sync commits to main do not
+  // rebuild Pages (GITHUB_TOKEN), so GitHub raw can be hours newer — merge both.
+  const primary = await Promise.all(
+    LEDGER_URLS.slice(0, 3).map((url) => fetchLedger(url())),
+  );
+  const docs = primary.filter((doc): doc is CloudDoc => Boolean(doc));
+  if (docs.length) return docs.reduce((acc, doc) => mergeDocs(acc, doc));
+  for (const url of LEDGER_URLS.slice(3)) {
     const doc = await fetchLedger(url());
     if (doc) return doc;
   }
