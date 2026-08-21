@@ -3,7 +3,7 @@ import maraudersCup from "./assets/marauders-cup.png";
 import { tournamentFacts, watchTips } from "./data/facts";
 import { matches, venues } from "./data/matches";
 import { members } from "./data/members";
-import { takeaways } from "./data/prize";
+import { takeawayLine, takeaways } from "./data/prize";
 import { teamById, teams } from "./data/teams";
 import type { FamilyMember, Match, MatchScore, MemberId } from "./data/types";
 import {
@@ -142,8 +142,8 @@ export function App() {
             <p className="eyebrow">Family Cup · Belgium & Netherlands</p>
             <h1>FIH World Cup 2026</h1>
             <p className="lede">
-              Five houses. One little gold cup. The winner chooses Hungry Jack's, McDonald's or KFC
-              for the family takeaway — and everyone else gets in the car.
+              Five houses. One little gold cup. The winner chooses {takeawayLine}
+              for the family — and everyone else gets in the car.
             </p>
           </div>
         </div>
@@ -274,8 +274,8 @@ function SpoilsCard({ leaderName }: { leaderName?: string }) {
       <p className="eyebrow">The spoils</p>
       <h3>The cup, then the car park</h3>
       <p className="lede">
-        First on the ladder lifts the little gold trophy and chooses Hungry Jack's, McDonald's or KFC
-        for the family takeaway. Everyone else gets in the car. Nobody vetoes the fries.
+        First on the ladder lifts the little gold trophy and chooses {takeawayLine}
+        for the family. Everyone else gets in the car. Nobody vetoes the order.
       </p>
       <TakeawayRow />
       {leaderName && (
@@ -325,7 +325,7 @@ function Today({
           </h2>
           <p className="lede">
             {you.name}, you own {you.teamIds.length} sides. The house on top when the World Cup ends
-            lifts the little gold trophy and chooses Hungry Jack's, Maccas or KFC for everyone.
+            lifts the little gold trophy and chooses {takeawayLine} for everyone.
             Family clashes pay extra. Official scores lock at half-time and full-time.
           </p>
           <TakeawayRow />
@@ -628,7 +628,7 @@ function Ladder({ board }: { board: ReturnType<typeof scoreboard> }) {
           <h2>The family ladder</h2>
           <p className="lede">
             Half-time scores count as they land; full-time replaces them. Tips wait for the final whistle.
-            First house lifts the little gold cup and chooses Hungry Jack's, McDonald's or KFC.
+            First house lifts the little gold cup and chooses {takeawayLine}.
             {board.some((row) => row.provisional) ? " Some points are still provisional until full-time." : ""}
           </p>
         </div>
@@ -750,7 +750,7 @@ function Facts() {
         </div>
       </div>
       <div className="card fact" style={{ marginBottom: 12 }}>
-        The prize is not a Pro League contract. The winner lifts the little gold cup the Marauders last reached for on turf, then picks Hungry Jack's, McDonald's or KFC. The rest of the family eats whatever comes out of the bag.
+        The prize is not a Pro League contract. The winner lifts the little gold cup the Marauders last reached for on turf, then picks {takeawayLine}. The rest of the family eats whatever comes out of the bag.
       </div>
       <div className="stack">
         {tournamentFacts.map((fact) => <div className="card fact" key={fact}>{fact}</div>)}
@@ -783,9 +783,8 @@ function Rules({ cloud }: { cloud: CloudStatus }) {
         <h2>One cup. One takeaway.</h2>
         <p className="lede">
           The winner of the Family Cup lifts the little gold trophy — the same cup this lot last
-          reached for in Marauders purple — and chooses the family takeaway. Hungry Jack's,
-          McDonald's or KFC. No split orders. No “can we just get a salad.” The winner's word is
-          the menu.
+          reached for in Marauders purple — and chooses the family feed. {takeawayLine}. No split
+          orders. No “can we just get a salad.” The winner's word is the menu.
         </p>
         <div className="stack" style={{ marginTop: 14 }}>
           {takeaways.map((shop) => (
@@ -808,7 +807,7 @@ function Rules({ cloud }: { cloud: CloudStatus }) {
           <li>Semi-final appearance +8 · final +12 · champion +20 · bronze +6</li>
           <li>Everyone tips: exact score +3 · correct result +1 — lock before kick-off, scored at full-time</li>
           <li>Official FIH scores write themselves at half-time and full-time, and the ladder updates at the same moment</li>
-          <li>The house on top at the end lifts the cup and picks Hungry Jack's, Maccas or KFC</li>
+          <li>The house on top at the end lifts the cup and picks {takeawayLine}</li>
         </ul>
         <p className="italic">Andrew and Hugo have seven teams because 32 does not divide by five. Their extras are the leftover lower-ranked sides, so the quality split stays honest.</p>
       </div>
