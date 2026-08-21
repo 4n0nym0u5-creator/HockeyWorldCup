@@ -706,6 +706,70 @@ h3 { font-size: 26px; }
   padding: 8px 0;
 }
 
+.path-block { margin: 0 0 32px; }
+.path-track {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.9fr) minmax(230px, 1.15fr) minmax(210px, 1fr) minmax(170px, 0.8fr);
+  gap: 16px;
+  overflow-x: auto;
+  padding: 10px 2px 18px;
+  align-items: start;
+  -webkit-overflow-scrolling: touch;
+}
+.path-col {
+  min-width: 170px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.path-round {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 24px;
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+.path-sub {
+  margin: 0 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.path-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.04);
+  min-height: 54px;
+}
+.path-chip.empty {
+  border-style: dashed;
+  opacity: 0.7;
+}
+.path-chip.out {
+  opacity: 0.38;
+  filter: grayscale(0.7);
+}
+.path-chip.cup {
+  min-height: 96px;
+  border-color: var(--gold);
+  background: linear-gradient(160deg, rgba(232, 195, 106, 0.22), rgba(255, 255, 255, 0.04));
+}
+.path-chip strong { display: block; font-size: 15px; }
+.path-chip span { display: block; font-size: 12px; opacity: 0.65; margin-top: 2px; }
+.path-chip .flag { width: 28px; height: 20px; flex: 0 0 auto; }
+.path-pair { display: grid; gap: 8px; }
+.path-vs {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.4;
+}
+
 .note-box {
   margin-top: 28px;
   padding-top: 22px;

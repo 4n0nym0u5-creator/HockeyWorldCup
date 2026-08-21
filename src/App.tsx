@@ -26,12 +26,14 @@ import { docToState, loadState, saveState, stateToDoc, type AppState } from "./l
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
 import { isFullTime, isInPlay } from "./lib/scorePhase";
 import { Flag, LocalNote, MatchCard, OfficialScore, TeamMark, TipCallout, WinnerCallout } from "./ui";
+import { PathToCup } from "./Path";
 
-type Tab = "today" | "live" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
+type Tab = "today" | "live" | "path" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "today", label: "Up Next" },
   { id: "live", label: "Live Games" },
+  { id: "path", label: "To the Cup" },
   { id: "schedule", label: "Fixtures" },
   { id: "rosters", label: "Houses" },
   { id: "table", label: "Ladder" },
@@ -186,6 +188,7 @@ export function App() {
 
       {tab === "today" && <Today you={you} state={state} board={board} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} tick={tick} />}
       {tab === "live" && <LiveGames state={state} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} tick={tick} />}
+      {tab === "path" && <PathToCup scores={state.scores} />}
       {tab === "schedule" && <Schedule you={you} state={state} onOpen={setOpenId} onRefresh={() => refreshKitchen.current()} />}
       {tab === "rosters" && <Rosters />}
       {tab === "table" && <Ladder board={board} />}
