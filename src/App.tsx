@@ -21,7 +21,7 @@ import {
 } from "./lib/cloud";
 import { ownerOf } from "./lib/owners";
 import { predictionPoints, scoreboard } from "./lib/scoring";
-import { poolTable } from "./lib/standings";
+import { crossoverTable, poolTable, type Row } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
 import { isFullTime, isInPlay } from "./lib/scorePhase";
@@ -690,50 +690,83 @@ function Clashes({ state, onOpen, onRefresh }: { state: AppState; onOpen: (id: s
   );
 }
 
+function PoolCard({ title, note, rows }: { title: string; note?: string; rows: Row[] }) {
+  return (
+    <div className="card" style={{ padding: 12, overflow: "auto" }}>
+      <h3>{title}</h3>
+      {note && <p className="lede" style={{ margin: "4px 0 10px", maxWidth: "none" }}>{note}</p>}
+      <table className="table">
+        <thead>
+          <tr><th>Team</th><th>House</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((row, idx) => {
+            const team = teamById[row.teamId];
+            if (!team) return null;
+            return (
+              <tr key={row.teamId} className={idx < 2 ? "qualify" : undefined}>
+                <td><strong>{team.short}</strong></td>
+                <td>{ownerOf(team.id)?.name}</td>
+                <td>{row.played}</td>
+                <td>{row.won}</td>
+                <td>{row.drawn}</td>
+                <td>{row.lost}</td>
+                <td>{row.gf - row.ga}</td>
+                <td><strong>{row.pts}</strong></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function Pools({ scores }: { scores: Record<string, MatchScore> }) {
+  const [stage, setStage] = useState<"second" | "opening">("second");
   return (
     <>
       <div className="section-head">
         <div>
-          <h2>Pool tables</h2>
-          <p className="lede">Pool tables use full-time results only. Top two from each pool go to the second group stage; bottom two play classification.</p>
+          <h2>{stage === "second" ? "Pools E & F" : "Opening pools"}</h2>
+          <p className="lede">
+            {stage === "second"
+              ? "Second round. Full-time only, including the first-round result that carries over. Top two from each pool go to the semi-finals."
+              : "Opening Pools A–D are finished. Top two went through to E and F; bottom two play classification."}
+          </p>
         </div>
+      </div>
+      <div className="filters" style={{ marginBottom: 16 }}>
+        <button type="button" className={`chip ${stage === "second" ? "active" : ""}`} onClick={() => setStage("second")}>
+          Second round
+        </button>
+        <button type="button" className={`chip ${stage === "opening" ? "active" : ""}`} onClick={() => setStage("opening")}>
+          Opening A–D
+        </button>
       </div>
       {(["M", "W"] as const).map((gender) => (
         <div key={gender} style={{ marginBottom: 28 }}>
           <h3 style={{ marginBottom: 12 }}>{gender === "M" ? "Men" : "Women"}</h3>
-          <div className="grid-2">
-            {(["A", "B", "C", "D"] as const).map((pool) => {
-              const rows = poolTable(gender, pool, scores);
-              return (
-                <div className="card" key={pool} style={{ padding: 12, overflow: "auto" }}>
-                  <h3>Pool {pool}</h3>
-                  <table className="table">
-                    <thead>
-                      <tr><th>Team</th><th>House</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row) => {
-                        const team = teamById[row.teamId];
-                        return (
-                          <tr key={row.teamId}>
-                            <td><strong>{team.short}</strong></td>
-                            <td>{ownerOf(team.id)?.name}</td>
-                            <td>{row.played}</td>
-                            <td>{row.won}</td>
-                            <td>{row.drawn}</td>
-                            <td>{row.lost}</td>
-                            <td>{row.gf - row.ga}</td>
-                            <td><strong>{row.pts}</strong></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            })}
-          </div>
+          {stage === "second" ? (
+            <div className="grid-2">
+              <PoolCard
+                title="Pool E"
+                note="Includes the first-round result that carries over. Top two go to the semis."
+                rows={crossoverTable(gender, "E", scores)}
+              />
+              <PoolCard
+                title="Pool F"
+                note="Includes the first-round result that carries over. Top two go to the semis."
+                rows={crossoverTable(gender, "F", scores)}
+              />
+            </div>
+          ) : (
+            <div className="grid-2">
+              {(["A", "B", "C", "D"] as const).map((pool) => (
+                <PoolCard key={pool} title={`Pool ${pool}`} rows={poolTable(gender, pool, scores)} />
+              ))}
+            </div>
+          )}
         </div>
       ))}
     </>

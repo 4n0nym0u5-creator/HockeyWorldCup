@@ -562,6 +562,9 @@ h3 { font-size: 26px; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
+.table tr.qualify td {
+  background: rgba(212, 175, 55, 0.08);
+}
 
 .leader {
   display: flex;
