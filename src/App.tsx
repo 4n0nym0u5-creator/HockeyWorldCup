@@ -30,7 +30,7 @@ import { Flag, LocalNote, MatchCard, OfficialScore, TeamMark, TipCallout, Winner
 type Tab = "today" | "schedule" | "rosters" | "table" | "clashes" | "pools" | "facts" | "rules";
 
 const tabs: { id: Tab; label: string }[] = [
-  { id: "today", label: "Tonight" },
+  { id: "today", label: "Up Next" },
   { id: "schedule", label: "Fixtures" },
   { id: "rosters", label: "Houses" },
   { id: "table", label: "Ladder" },
@@ -297,13 +297,12 @@ function Today({
 }) {
   void tick;
   const now = Date.now();
-  const upcoming = matches
-    .filter((m) => new Date(m.kickoff).getTime() + 90 * 60_000 > now)
-    .slice(0, 6);
-  const results = matches.filter((m) => {
-    const start = new Date(m.kickoff).getTime();
-    return start + 90 * 60_000 <= now && Boolean(state.scores[m.id]);
-  }).slice(-8);
+  const upcoming = matches.filter((m) => new Date(m.kickoff).getTime() > now);
+  const groups = new Map<string, typeof upcoming>();
+  for (const match of upcoming) {
+    const key = dayKey(match.kickoff);
+    groups.set(key, [...(groups.get(key) ?? []), match]);
+  }
   const yours = upcoming.filter(
     (m) => you.teamIds.includes(m.homeId) || you.teamIds.includes(m.awayId),
   );
@@ -346,22 +345,23 @@ function Today({
 
       <div className="grid-2">
         <div>
-          {results.length > 0 && (
-            <>
-              <div className="section-head"><h2>Latest results</h2></div>
-              <div className="stack" style={{ marginBottom: 22 }}>
-                {results.map((match) => (
-                  <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} onRefresh={onRefresh} />
-                ))}
+          {upcoming.length === 0 ? (
+            <div className="section-head">
+              <h2>Up next</h2>
+              <p className="lede">Every match is in. The cup and the takeaway are decided.</p>
+            </div>
+          ) : (
+            [...groups.entries()].map(([key, dayMatches]) => (
+              <div key={key}>
+                <div className="day-label">{formatDate(dayMatches[0].kickoff)}</div>
+                <div className="stack" style={{ marginBottom: 22 }}>
+                  {dayMatches.map((match) => (
+                    <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} onRefresh={onRefresh} />
+                  ))}
+                </div>
               </div>
-            </>
+            ))
           )}
-          <div className="section-head"><h2>Up next</h2></div>
-          <div className="stack">
-            {upcoming.map((match) => (
-              <MatchCard key={match.id} match={match} score={state.scores[match.id]} notes={state.notes[match.id]} tips={state.predictions[match.id]} onOpen={() => onOpen(match.id)} onRefresh={onRefresh} />
-            ))}
-          </div>
         </div>
         <div className="stack">
           <SpoilsCard leaderName={board[0] ? members.find((m) => m.id === board[0].memberId)?.name : undefined} />
