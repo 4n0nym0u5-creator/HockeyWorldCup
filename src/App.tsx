@@ -335,12 +335,12 @@ function Today({
         </div>
       </section>
 
-      <button className="card spotlight" onClick={() => onOpen("m18")} style={{ width: "100%", textAlign: "left", marginBottom: 18 }}>
-        <p className="eyebrow">Must watch · 19 August</p>
-        <h3>India vs Pakistan · the rivalry</h3>
+      <button className="card spotlight" onClick={() => onOpen("m27")} style={{ width: "100%", textAlign: "left", marginBottom: 18 }}>
+        <p className="eyebrow">Must watch · 21 August · Pool F</p>
+        <h3>Australia vs Belgium · the second-round opener</h3>
         <p className="lede">
-          Nicole's India against Emily's Pakistan at Wagener Stadium. Harmanpreet's drag-flick vs a four-time world champion
-          in green. Family clash bonus is live. Tap to tip it now.
+          Emily's Kookaburras, winners of Pool C, against Andrew's world No. 1 hosts at Belfius.
+          Family clash bonus is live. Tap to tip it before kick-off.
         </p>
       </button>
 
@@ -460,7 +460,7 @@ function Schedule({
       <div className="section-head">
         <div>
           <h2>Every fixture</h2>
-          <p className="lede">Pool games are locked in. Later rounds fill as you enter results — or stay as labelled ties.</p>
+          <p className="lede">Second-round Pools E and F, and classification Pools G and H, are locked from the opening tables. Semi-finals fill when those pools finish.</p>
         </div>
       </div>
       <div className="filters" style={{ marginBottom: 16 }}>
