@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1787350000000,
+  "updatedAt": 1787371757158,
   "scores": {
     "w01": {
       "home": 2,
@@ -1597,6 +1597,12 @@
         "home": 2,
         "away": 0,
         "at": 1787300553510
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371407007
       }
     ],
     "w30": [
@@ -1617,6 +1623,12 @@
         "home": 2,
         "away": 1,
         "at": 1787300567625
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371397740
       }
     ],
     "m29": [
@@ -1637,6 +1649,12 @@
         "home": 2,
         "away": 1,
         "at": 1787300577493
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371386174
       }
     ],
     "m30": [
@@ -1651,6 +1669,18 @@
         "home": 2,
         "away": 1,
         "at": 1787300594692
+      },
+      {
+        "memberId": "nicole",
+        "home": 0,
+        "away": 0,
+        "at": 1787370738453
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371378972
       }
     ],
     "w31": [
@@ -1665,6 +1695,18 @@
         "home": 2,
         "away": 2,
         "at": 1787300621873
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 1,
+        "at": 1787370774087
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371364422
       }
     ],
     "w32": [
@@ -1679,6 +1721,18 @@
         "home": 2,
         "away": 1,
         "at": 1787300636275
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 2,
+        "at": 1787370784642
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371355240
       }
     ],
     "m31": [
@@ -1687,6 +1741,18 @@
         "home": 0,
         "away": 2,
         "at": 1787299374549
+      },
+      {
+        "memberId": "nicole",
+        "home": 4,
+        "away": 1,
+        "at": 1787370793374
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371338623
       }
     ],
     "m32": [
@@ -1695,6 +1761,18 @@
         "home": 0,
         "away": 0,
         "at": 1787299377979
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 3,
+        "at": 1787370802663
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371332074
       }
     ],
     "w33": [
@@ -1703,6 +1781,18 @@
         "home": 0,
         "away": 2,
         "at": 1787299382982
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 1,
+        "at": 1787370814225
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371601455
       }
     ],
     "w34": [
@@ -1711,6 +1801,18 @@
         "home": 2,
         "away": 0,
         "at": 1787299387409
+      },
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 1,
+        "at": 1787370829479
+      },
+      {
+        "memberId": "andrew",
+        "home": 0,
+        "away": 1,
+        "at": 1787371593139
       }
     ],
     "w35": [
@@ -1719,6 +1821,18 @@
         "home": 2,
         "away": 0,
         "at": 1787299393349
+      },
+      {
+        "memberId": "nicole",
+        "home": 3,
+        "away": 0,
+        "at": 1787370840366
+      },
+      {
+        "memberId": "andrew",
+        "home": 0,
+        "away": 1,
+        "at": 1787371587204
       }
     ],
     "m34": [
@@ -1727,6 +1841,18 @@
         "home": 5,
         "away": 0,
         "at": 1787299398030
+      },
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 2,
+        "at": 1787370857587
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371566739
       }
     ],
     "w36": [
@@ -1735,6 +1861,18 @@
         "home": 0,
         "away": 2,
         "at": 1787299404366
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 0,
+        "at": 1787370867659
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371559639
       }
     ],
     "m35": [
@@ -1743,6 +1881,18 @@
         "home": 4,
         "away": 0,
         "at": 1787299408797
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 1,
+        "at": 1787370881966
+      },
+      {
+        "memberId": "andrew",
+        "home": 0,
+        "away": 1,
+        "at": 1787371545773
       }
     ],
     "m36": [
@@ -1751,6 +1901,18 @@
         "home": 0,
         "away": 0,
         "at": 1787299410925
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 0,
+        "at": 1787370891517
+      },
+      {
+        "memberId": "andrew",
+        "home": 0,
+        "away": 1,
+        "at": 1787371508039
       }
     ],
     "w38": [
@@ -1759,6 +1921,18 @@
         "home": 0,
         "away": 3,
         "at": 1787299423924
+      },
+      {
+        "memberId": "nicole",
+        "home": 0,
+        "away": 2,
+        "at": 1787370904541
+      },
+      {
+        "memberId": "andrew",
+        "home": 0,
+        "away": 1,
+        "at": 1787371492672
       }
     ],
     "m37": [
@@ -1767,6 +1941,18 @@
         "home": 0,
         "away": 0,
         "at": 1787299427779
+      },
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 0,
+        "at": 1787370910943
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371485906
       }
     ],
     "m38": [
@@ -1775,6 +1961,90 @@
         "home": 0,
         "away": 2,
         "at": 1787299432925
+      },
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 1,
+        "at": 1787370927511
+      },
+      {
+        "memberId": "andrew",
+        "home": 0,
+        "away": 1,
+        "at": 1787371477939
+      }
+    ],
+    "m33": [
+      {
+        "memberId": "nicole",
+        "home": 0,
+        "away": 2,
+        "at": 1787370847968
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 2,
+        "at": 1787371580122
+      }
+    ],
+    "w37": [
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 0,
+        "at": 1787370899021
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371499489
+      }
+    ],
+    "m39": [
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 0,
+        "at": 1787370936274
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371465339
+      }
+    ],
+    "w39": [
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 3,
+        "at": 1787370947169
+      },
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371452139
+      }
+    ],
+    "m40": [
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371431557
+      }
+    ],
+    "w40": [
+      {
+        "memberId": "andrew",
+        "home": 1,
+        "away": 0,
+        "at": 1787371442756
       }
     ]
   },
@@ -1807,7 +2077,7 @@
       {
         "id": "georgia-1786776030225",
         "memberId": "georgia",
-        "text": "troy and abed in the MORNING \ud83d\ude01",
+        "text": "troy and abed in the MORNING 😁",
         "at": 1786776030225
       },
       {
@@ -1825,13 +2095,13 @@
       {
         "id": "nicole-1786776308162",
         "memberId": "nicole",
-        "text": "I can\u2019t wait to see mbappe play in tonight\u2019s match",
+        "text": "I can’t wait to see mbappe play in tonight’s match",
         "at": 1786776308162
       },
       {
         "id": "nicole-1786776344059",
         "memberId": "nicole",
-        "text": "You\u2019re live",
+        "text": "You’re live",
         "at": 1786776344059
       },
       {
@@ -1873,13 +2143,13 @@
       {
         "id": "hugo-1786776754605",
         "memberId": "hugo",
-        "text": "\ud83d\udd95I\u2019m slim shady yes I\u2019m slim shady all the other slim shadys please stand up please stand up",
+        "text": "🖕I’m slim shady yes I’m slim shady all the other slim shadys please stand up please stand up",
         "at": 1786776754605
       },
       {
         "id": "georgia-1786777081292",
         "memberId": "georgia",
-        "text": "\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95\ud83d\udd95",
+        "text": "🖕🖕🖕🖕🖕🖕🖕🖕🖕🖕🖕🖕🖕🖕🖕",
         "at": 1786777081292
       }
     ],
@@ -1959,7 +2229,7 @@
       {
         "id": "hugo-1786877952845",
         "memberId": "hugo",
-        "text": "3-0 \ud83d\ude0e",
+        "text": "3-0 😎",
         "at": 1786877952845
       }
     ]
