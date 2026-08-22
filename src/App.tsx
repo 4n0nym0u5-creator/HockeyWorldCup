@@ -340,11 +340,11 @@ function Today({
       </section>
 
       <button className="card spotlight" onClick={() => onOpen("m27")} style={{ width: "100%", textAlign: "left", marginBottom: 18 }}>
-        <p className="eyebrow">Must watch · 21 August · Pool F</p>
-        <h3>Australia vs Belgium · the second-round opener</h3>
+        <p className="eyebrow">Official · 21 August · Pool F</p>
+        <h3>Australia 1–1 Belgium</h3>
         <p className="lede">
-          Emily's Kookaburras, winners of Pool C, against Andrew's world No. 1 hosts at Belfius.
-          Family clash bonus is live. Tap to tip it before kick-off.
+          Emily's Kookaburras and Andrew's hosts shared the points at Belfius. Family clash stayed
+          unclaimed. Tap for the card and the kitchen notes.
         </p>
       </button>
 

@@ -10,14 +10,14 @@ const TMS = {
   m01: 22334, m02: 22335, m03: 22336, m04: 22337, m05: 22338, m06: 22339, m07: 22340, m08: 22341,
   m09: 22342, m10: 22343, m11: 22344, m12: 22345, m13: 22346, m14: 22347, m15: 22348, m16: 22349,
   m17: 22350, m18: 22351, m19: 22352, m20: 22353, m21: 22354, m22: 22355, m23: 22356, m24: 22357,
-  m25: 22358, m26: 22359, m27: 22360, m28: 22361, m29: 22362, m30: 22363, m31: 22364, m32: 22365,
+  m25: 22358, m26: 22359, m27: 22361, m28: 22360, m29: 22362, m30: 22363, m31: 22364, m32: 22365,
   m33: 22366, m34: 22367, m35: 22368, m36: 22369, m37: 22370, m38: 22371, m39: 22372, m40: 22373,
   m41: 22374, m42: 22375, m43: 22376, m44: 22377, m45: 22378, m46: 22383, m47: 22379, m48: 22380,
   m49: 22381, m50: 22382,
   w01: 22384, w02: 22385, w03: 22386, w04: 22387, w05: 22388, w06: 22389, w07: 22390, w08: 22391,
   w09: 22392, w10: 22393, w11: 22394, w12: 22395, w13: 22396, w14: 22397, w15: 22398, w16: 22399,
   w17: 22400, w18: 22401, w19: 22402, w20: 22403, w21: 22404, w22: 22405, w23: 22406, w24: 22407,
-  w25: 22408, w26: 22409, w27: 22410, w28: 22411, w29: 22412, w30: 22413, w31: 22414, w32: 22415,
+  w25: 22409, w26: 22408, w27: 22410, w28: 22411, w29: 22412, w30: 22413, w31: 22414, w32: 22415,
   w33: 22416, w34: 22417, w35: 22418, w36: 22419, w37: 22420, w38: 22421, w39: 22422, w40: 22423,
   w41: 22424, w42: 22425, w43: 22426, w44: 22427, w45: 22428, w46: 22429, w47: 22430, w48: 22431,
   w49: 22432, w50: 22433,
@@ -26,13 +26,30 @@ const TMS = {
 const PRE_KICKOFF_MS = 30 * 60_000;
 const POST_KICKOFF_MS = 4 * 60 * 60_000;
 
-function kickoffs() {
+const TEAM_NAMES = {
+  "m-arg": ["Argentina"], "m-aus": ["Australia"], "m-bel": ["Belgium"], "m-eng": ["England"],
+  "m-esp": ["Spain"], "m-fra": ["France"], "m-ger": ["Germany"], "m-ind": ["India"],
+  "m-irl": ["Ireland"], "m-jpn": ["Japan"], "m-mas": ["Malaysia"], "m-ned": ["Netherlands"],
+  "m-nzl": ["New Zealand"], "m-pak": ["Pakistan"], "m-rsa": ["South Africa"], "m-wal": ["Wales"],
+  "w-arg": ["Argentina"], "w-aus": ["Australia"], "w-bel": ["Belgium"], "w-chi": ["Chile"],
+  "w-chn": ["China"], "w-eng": ["England"], "w-esp": ["Spain"], "w-ger": ["Germany"],
+  "w-ind": ["India"], "w-irl": ["Ireland"], "w-jpn": ["Japan"], "w-ned": ["Netherlands"],
+  "w-nzl": ["New Zealand"], "w-rsa": ["South Africa"], "w-sco": ["Scotland"],
+  "w-usa": ["United States", "USA"],
+};
+
+function fixtures() {
   const src = readFileSync(matchesPath, "utf8");
   const map = {};
-  for (const match of src.matchAll(/m\("(w\d+|m\d+)",\s*"[MW]",\s*"([^"]+)"/g)) {
-    map[match[1]] = match[2];
+  for (const match of src.matchAll(/m\("(w\d+|m\d+)",\s*"[MW]",\s*"([^"]+)",\s*"[^"]+",\s*"([^"]+)",\s*"([^"]+)"/g)) {
+    map[match[1]] = { kickoff: match[2], homeId: match[3], awayId: match[4] };
   }
   return map;
+}
+
+function htmlHasFixture(html, homeId, awayId) {
+  const has = (id) => (TEAM_NAMES[id] ?? []).some((name) => html.includes(name));
+  return Boolean(homeId && awayId && has(homeId) && has(awayId));
 }
 
 function parseScoreline(value) {
@@ -151,7 +168,8 @@ async function fetchMatch(tmsId) {
     headers: { "User-Agent": "FamilyCupScoreSync/1.0" },
   });
   if (!res.ok) throw new Error(`TMS ${tmsId} HTTP ${res.status}`);
-  return parseMatchPage(await res.text());
+  const html = await res.text();
+  return { ...parseMatchPage(html), html };
 }
 
 const MEMBERS = new Set(["andrew", "nicole", "georgia", "emily", "hugo"]);
@@ -236,7 +254,7 @@ function notesChanged(before, after) {
 }
 
 async function main() {
-  const times = kickoffs();
+  const card = fixtures();
   const doc = JSON.parse(readFileSync(ledgerPath, "utf8"));
   doc.scores ??= {};
   doc.predictions ??= {};
@@ -244,13 +262,18 @@ async function main() {
 
   const jobs = Object.entries(TMS).filter(([matchId, tmsId]) => {
     void tmsId;
-    return shouldPoll(matchId, times[matchId], doc.scores[matchId]);
+    return shouldPoll(matchId, card[matchId]?.kickoff, doc.scores[matchId]);
   });
 
   let changed = 0;
   for (const [matchId, tmsId] of jobs) {
     try {
       const incoming = await fetchMatch(tmsId);
+      const fx = card[matchId];
+      if (fx && !htmlHasFixture(incoming.html, fx.homeId, fx.awayId)) {
+        console.error(`${matchId} TMS ${tmsId} is not ${fx.homeId} vs ${fx.awayId} — skipped`);
+        continue;
+      }
       const next = applyOfficial(doc.scores[matchId], incoming);
       if (next && !sameScore(doc.scores[matchId] ?? {}, next)) {
         doc.scores[matchId] = next;
