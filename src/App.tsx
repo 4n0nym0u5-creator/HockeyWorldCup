@@ -285,6 +285,23 @@ function SpoilsCard({ leaderName }: { leaderName?: string }) {
   );
 }
 
+function recentFinished(scores: Record<string, MatchScore>, now: number) {
+  const windowMs = 36 * 60 * 60 * 1000;
+  return matches
+    .filter((match) => {
+      if (match.homeId === "tbd") return false;
+      const start = new Date(match.kickoff).getTime();
+      return start <= now && now - start < windowMs && Boolean(scores[match.id]);
+    })
+    .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
+}
+
+function latestFullTime(scores: Record<string, MatchScore>) {
+  return [...matches]
+    .filter((match) => match.homeId !== "tbd" && isFullTime(scores[match.id]))
+    .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime())[0] ?? null;
+}
+
 function Today({
   you,
   state,
@@ -303,6 +320,11 @@ function Today({
   void tick;
   const now = Date.now();
   const upcoming = matches.filter((m) => new Date(m.kickoff).getTime() > now);
+  const recent = recentFinished(state.scores, now);
+  const lastFt = latestFullTime(state.scores);
+  const lastHome = lastFt ? teamById[lastFt.homeId] : undefined;
+  const lastAway = lastFt ? teamById[lastFt.awayId] : undefined;
+  const lastScore = lastFt ? state.scores[lastFt.id] : undefined;
   const groups = new Map<string, typeof upcoming>();
   for (const match of upcoming) {
     const key = dayKey(match.kickoff);
@@ -339,14 +361,39 @@ function Today({
         </div>
       </section>
 
-      <button className="card spotlight" onClick={() => onOpen("m27")} style={{ width: "100%", textAlign: "left", marginBottom: 18 }}>
-        <p className="eyebrow">Official · 21 August · Pool F</p>
-        <h3>Australia 1–1 Belgium</h3>
-        <p className="lede">
-          Emily's Kookaburras and Andrew's hosts shared the points at Belfius. Family clash stayed
-          unclaimed. Tap for the card and the kitchen notes.
-        </p>
-      </button>
+      {lastFt && lastScore && (
+        <button className="card spotlight" onClick={() => onOpen(lastFt.id)} style={{ width: "100%", textAlign: "left", marginBottom: 18 }}>
+          <p className="eyebrow">Official · {formatDate(lastFt.kickoff)} · {lastFt.label}</p>
+          <h3>{lastHome?.name} {lastScore.home}–{lastScore.away} {lastAway?.name}</h3>
+          <p className="lede">
+            Latest full-time on the board. Finished games leave Up Next, so tap through for the card.
+          </p>
+        </button>
+      )}
+
+      {recent.length > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <div className="section-head">
+            <div>
+              <h2>Just in</h2>
+              <p className="lede">Full-time from the last day or so. Up Next only lists games still to play.</p>
+            </div>
+          </div>
+          <div className="stack">
+            {recent.map((match) => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                score={state.scores[match.id]}
+                notes={state.notes[match.id]}
+                tips={state.predictions[match.id]}
+                onOpen={() => onOpen(match.id)}
+                onRefresh={onRefresh}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid-2">
         <div>
