@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1787558956581,
+  "updatedAt": 1787562371030,
   "scores": {
     "w01": {
       "home": 2,
@@ -723,11 +723,13 @@
     },
     "m37": {
       "home": 2,
-      "away": 0,
+      "away": 1,
+      "htHome": 2,
+      "htAway": 0,
       "phase": "live",
       "source": "fih",
-      "status": "2nd Quarter",
-      "at": 1787558956523
+      "status": "4th Quarter",
+      "at": 1787562370217
     }
   },
   "predictions": {
@@ -2088,7 +2090,7 @@
         "memberId": "hugo",
         "home": 0,
         "away": 3,
-        "at": 1787299423924
+        "at": 1787559981063
       },
       {
         "memberId": "nicole",
@@ -2169,6 +2171,12 @@
         "home": 1,
         "away": 0,
         "at": 1787371499489
+      },
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 0,
+        "at": 1787559977327
       }
     ],
     "m39": [
@@ -2183,6 +2191,12 @@
         "home": 1,
         "away": 0,
         "at": 1787371465339
+      },
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 0,
+        "at": 1787559985729
       }
     ],
     "w39": [
@@ -2205,6 +2219,12 @@
         "home": 1,
         "away": 0,
         "at": 1787371431557
+      },
+      {
+        "memberId": "hugo",
+        "home": 2,
+        "away": 0,
+        "at": 1787559996864
       }
     ],
     "w40": [
@@ -2213,6 +2233,12 @@
         "home": 1,
         "away": 0,
         "at": 1787371442756
+      },
+      {
+        "memberId": "hugo",
+        "home": 0,
+        "away": 1,
+        "at": 1787559993067
       }
     ]
   },
