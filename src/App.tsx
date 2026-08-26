@@ -569,7 +569,7 @@ function Schedule({
       <div className="section-head">
         <div>
           <h2>Every fixture</h2>
-          <p className="lede">Second-round Pools E and F, and classification Pools G and H, are locked from the opening tables. Semi-finals fill when those pools finish.</p>
+          <p className="lede">Semi-finals and classification matches are locked from Pools E–H. Bronze and the final fill when the semis are done.</p>
         </div>
       </div>
       <div className="filters" style={{ marginBottom: 16 }}>
@@ -778,7 +778,7 @@ function Pools({ scores }: { scores: Record<string, MatchScore> }) {
           <h2>{stage === "second" ? "Pools E & F" : "Opening pools"}</h2>
           <p className="lede">
             {stage === "second"
-              ? "Second round. Full-time only, including the first-round result that carries over. Top two from each pool go to the semi-finals."
+              ? "Finished. Full-time only, including the first-round result that carries over. Top two from each pool are in the semi-finals."
               : "Opening Pools A–D are finished. Top two went through to E and F; bottom two play classification."}
           </p>
         </div>

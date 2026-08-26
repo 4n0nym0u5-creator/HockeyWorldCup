@@ -72,7 +72,7 @@ function GenderPath({
   return (
     <div className="path-track">
       <div className="path-col">
-        <p className="path-round">Still playing</p>
+        <p className="path-round">Second round</p>
         <p className="path-sub">Pool E · top two to the semis</p>
         {tableE.map((row, idx) => (
           <TeamChip key={row.teamId} teamId={row.teamId} out={doneE && idx > 1} tag={idx < 2 ? "Semi track" : "5th–8th"} />
@@ -125,9 +125,9 @@ export function PathToCup({ scores }: { scores: Record<string, MatchScore> }) {
         <div>
           <h2>To the cup</h2>
           <p className="lede">
-            Left to right: who is still in, who they have to beat, and who lifts the little gold
-            trophy. Blanks stay blank until that round is decided. Classification for 9th–16th is
-            a different fight — this is only the road to the final.
+            Left to right: how Pools E and F finished, who they play in the semis, and who lifts the
+            little gold trophy. Blanks stay blank until that round is decided. Classification for
+            9th–16th is a different fight — this is only the road to the final.
           </p>
         </div>
       </div>

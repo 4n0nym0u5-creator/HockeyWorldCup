@@ -20,7 +20,7 @@ export const tournamentFacts = [
   "A field hockey match is four 15-minute quarters. Wins are worth three points, draws one — same as football, faster than football.",
   "The women's final is 29 August in Amstelveen. The men's final is 30 August in Wavre.",
   `The Family Cup prize is a little gold trophy and the right to pick ${takeawayLine}. The rest of you eat whatever comes out of the bag.`,
-  "Second round is locked: women's Pool E is Netherlands, Australia, China and India. Pool F is Argentina, Germany, Belgium and Spain. Top two from each go to the semis.",
+  "Second round is done. Women's semis: Netherlands vs Belgium, Argentina vs Australia. Men's: Netherlands vs Spain, Germany vs Argentina.",
 ];
 
 export const watchTips = [
