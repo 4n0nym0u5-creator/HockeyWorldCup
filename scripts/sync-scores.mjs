@@ -24,7 +24,6 @@ const TMS = {
 };
 
 const PRE_KICKOFF_MS = 30 * 60_000;
-const POST_KICKOFF_MS = 4 * 60 * 60_000;
 
 const TEAM_NAMES = {
   "m-arg": ["Argentina"], "m-aus": ["Australia"], "m-bel": ["Belgium"], "m-eng": ["England"],
@@ -117,9 +116,9 @@ function shouldPoll(matchId, kickoff, existing) {
   if (Number.isNaN(start)) return false;
   const now = Date.now();
   if (now < start - PRE_KICKOFF_MS) return false;
-  if (now > start + POST_KICKOFF_MS && existing?.phase === "ft") return false;
-  if (now > start + POST_KICKOFF_MS && !existing) return false;
-  return now <= start + POST_KICKOFF_MS || existing?.phase === "ht" || existing?.phase === "live";
+  // Keep polling until official full-time exists. GitHub's cron often skips the
+  // live window, and a 4-hour cutoff was leaving finished games blank forever.
+  return true;
 }
 
 function sameScore(a, b) {

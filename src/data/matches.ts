@@ -117,12 +117,12 @@ export const matches: Match[] = [
   m("m43", "M", "2026-08-28T10:30:00.000Z", "wagener", "m-pak", "m-rsa", "placement", "11th-place match", { note: "Second from Pool G against second from Pool H. Emily vs Nicole." }),
   m("m44", "M", "2026-08-28T12:00:00.000Z", "wavre", "m-nzl", "m-irl", "placement", "9th-place match", { note: "New Zealand won Pool G. Ireland won Pool H. Andrew owns both shirts." }),
   m("m45", "M", "2026-08-28T13:00:00.000Z", "wagener", "m-eng", "m-aus", "placement", "5th-place match", { note: "Third from Pool E against third from Pool F. Georgia vs Emily." }),
-  m("m46", "M", "2026-08-28T15:00:00.000Z", "wavre", "m-ind", "m-bel", "placement", "7th-place match", { note: "Fourth from Pool E against fourth from Pool F. Nicole vs Andrew." }),
+  m("m46", "M", "2026-08-28T16:15:00.000Z", "wavre", "m-ind", "m-bel", "placement", "7th-place match", { note: "Fourth from Pool E against fourth from Pool F. Nicole vs Andrew." }),
   m("m47", "M", "2026-08-28T16:00:00.000Z", "wagener", "m-ned", "m-esp", "semifinal", "Men's semi-final 1", { note: "Pool E winners against Pool F runners-up. Nicole vs Georgia." }),
   m("m48", "M", "2026-08-28T18:30:00.000Z", "wavre", "m-ger", "m-arg", "semifinal", "Men's semi-final 2", { note: "Defending champions won Pool F. Argentina finished second in E. Hugo vs Emily." }),
 
-  m("w49", "W", "2026-08-29T11:00:00.000Z", "wagener", "tbd", "tbd", "third", "Women's bronze medal match", {}),
-  m("w50", "W", "2026-08-29T14:00:00.000Z", "wagener", "tbd", "tbd", "final", "Women's World Cup final", { note: "The Orange machine, Las Leonas, or a new name on the trophy." }),
+  m("w49", "W", "2026-08-29T11:00:00.000Z", "wagener", "w-bel", "w-aus", "third", "Women's bronze medal match", { note: "Semi-final losers. Nicole vs Georgia." }),
+  m("w50", "W", "2026-08-29T14:00:00.000Z", "wagener", "w-ned", "w-arg", "final", "Women's World Cup final", { note: "Netherlands beat Belgium. Argentina beat Australia. Emily vs Nicole." }),
 
   m("m49", "M", "2026-08-30T12:00:00.000Z", "wavre", "tbd", "tbd", "third", "Men's bronze medal match", {}),
   m("m50", "M", "2026-08-30T14:30:00.000Z", "wavre", "tbd", "tbd", "final", "Men's World Cup final", { note: "Germany defend, Belgium host, or someone steals the decade." }),
