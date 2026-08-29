@@ -10,10 +10,9 @@ function pageLedgerUrl() {
 }
 
 const LEDGER_URLS = [
-  () => pageLedgerUrl(),
   () => `${RAW}?t=${Date.now()}`,
-  () => `https://media.githubusercontent.com/media/${REPO}/main/${PATH}?t=${Date.now()}`,
   () => `https://github.com/${REPO}/raw/refs/heads/main/${PATH}?t=${Date.now()}`,
+  () => pageLedgerUrl(),
   () => `${API}?ref=main&t=${Date.now()}`,
 ];
 const KITCHEN = "https://ntfy.sh/fih-family-cup-2026-kitchen-notes";
@@ -213,15 +212,18 @@ async function fetchLedger(href: string, ms = 4000): Promise<CloudDoc | null> {
 }
 
 export async function pullLedger(): Promise<CloudDoc | null> {
-  // Same-origin ledger.json is a build snapshot. Score-sync commits to main do not
-  // rebuild Pages (GITHUB_TOKEN), so GitHub raw can be hours newer — merge both.
+  // GitHub raw is the live ledger; ledger.json on Pages is only a build snapshot and can
+  // lag by a day because score-sync pushes do not trigger Pages rebuilds on their own.
   const primary = await Promise.all(
-    LEDGER_URLS.slice(0, 3).map((url) => fetchLedger(url())),
+    LEDGER_URLS.slice(0, 3).map((url) => fetchLedger(url(), 8000)),
   );
   const docs = primary.filter((doc): doc is CloudDoc => Boolean(doc));
-  if (docs.length) return docs.reduce((acc, doc) => mergeDocs(acc, doc));
+  if (docs.length) {
+    docs.sort((a, b) => b.updatedAt - a.updatedAt);
+    return docs.reduce((acc, doc) => mergeDocs(acc, doc));
+  }
   for (const url of LEDGER_URLS.slice(3)) {
-    const doc = await fetchLedger(url());
+    const doc = await fetchLedger(url(), 8000);
     if (doc) return doc;
   }
   return null;
