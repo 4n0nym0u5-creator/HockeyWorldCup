@@ -105,3 +105,9 @@ export function matchWinnerId(homeId: string, awayId: string, score?: MatchScore
   if (score.away > score.home) return awayId;
   return null;
 }
+
+export function matchLoserId(homeId: string, awayId: string, score?: MatchScore) {
+  const winner = matchWinnerId(homeId, awayId, score);
+  if (!winner) return null;
+  return winner === homeId ? awayId : homeId;
+}

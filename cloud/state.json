@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1787960255484,
+  "updatedAt": 1787993151230,
   "scores": {
     "w01": {
       "home": 2,
@@ -2741,6 +2741,34 @@
         "home": 2,
         "away": 1,
         "at": 1787822116386
+      }
+    ],
+    "w49": [
+      {
+        "memberId": "nicole",
+        "home": 1,
+        "away": 0,
+        "at": 1787992983012
+      },
+      {
+        "memberId": "andrew",
+        "home": 2,
+        "away": 0,
+        "at": 1787993015413
+      }
+    ],
+    "w50": [
+      {
+        "memberId": "nicole",
+        "home": 2,
+        "away": 1,
+        "at": 1787993029326
+      },
+      {
+        "memberId": "andrew",
+        "home": 2,
+        "away": 0,
+        "at": 1787993032724
       }
     ]
   },
