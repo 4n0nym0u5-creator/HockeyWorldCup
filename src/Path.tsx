@@ -1,16 +1,18 @@
 import type { Gender, MatchScore } from "./data/types";
 import { teamById } from "./data/teams";
 import { ownerOf } from "./lib/owners";
+import { isFullTime } from "./lib/scorePhase";
 import {
   crossoverFinished,
   crossoverTable,
+  matchLoserId,
   matchWinnerId,
 } from "./lib/standings";
 import { Flag } from "./ui";
 
 const KEYS = {
-  W: { sf1: "w47", sf2: "w48", final: "w50" },
-  M: { sf1: "m47", sf2: "m48", final: "m50" },
+  W: { sf1: "w47", sf2: "w48", third: "w49", final: "w50" },
+  M: { sf1: "m47", sf2: "m48", third: "m49", final: "m50" },
 } as const;
 
 function TeamChip({
@@ -49,6 +51,11 @@ function TeamChip({
   );
 }
 
+function ScoreLine({ score }: { score?: MatchScore }) {
+  if (!score || !isFullTime(score)) return null;
+  return <span className="path-score">{score.home}–{score.away}</span>;
+}
+
 function GenderPath({
   gender,
   scores,
@@ -65,9 +72,14 @@ function GenderPath({
   const secondE = doneE ? tableE[1]?.teamId : null;
   const firstF = doneF ? tableF[0]?.teamId : null;
   const secondF = doneF ? tableF[1]?.teamId : null;
-  const sf1Winner = matchWinnerId(firstE ?? "tbd", secondF ?? "tbd", scores[keys.sf1]);
-  const sf2Winner = matchWinnerId(firstF ?? "tbd", secondE ?? "tbd", scores[keys.sf2]);
+  const sf1Score = scores[keys.sf1];
+  const sf2Score = scores[keys.sf2];
+  const sf1Winner = matchWinnerId(firstE ?? "tbd", secondF ?? "tbd", sf1Score);
+  const sf2Winner = matchWinnerId(firstF ?? "tbd", secondE ?? "tbd", sf2Score);
+  const sf1Loser = matchLoserId(firstE ?? "tbd", secondF ?? "tbd", sf1Score);
+  const sf2Loser = matchLoserId(firstF ?? "tbd", secondE ?? "tbd", sf2Score);
   const champion = matchWinnerId(sf1Winner ?? "tbd", sf2Winner ?? "tbd", scores[keys.final]);
+  const bronze = matchWinnerId(sf1Loser ?? "tbd", sf2Loser ?? "tbd", scores[keys.third]);
 
   return (
     <div className="path-track">
@@ -87,25 +99,41 @@ function GenderPath({
         <p className="path-round">Semi-finals</p>
         <p className="path-sub">1st E vs 2nd F</p>
         <div className="path-pair">
-          <TeamChip teamId={firstE} tag="1st Pool E" />
-          <span className="path-vs">vs</span>
-          <TeamChip teamId={secondF} tag="2nd Pool F" />
+          <TeamChip teamId={firstE} tag="1st Pool E" out={Boolean(sf1Winner && sf1Winner !== firstE)} />
+          <span className="path-vs">vs <ScoreLine score={sf1Score} /></span>
+          <TeamChip teamId={secondF} tag="2nd Pool F" out={Boolean(sf1Winner && sf1Winner !== secondF)} />
         </div>
         <p className="path-sub" style={{ marginTop: 18 }}>1st F vs 2nd E</p>
         <div className="path-pair">
-          <TeamChip teamId={firstF} tag="1st Pool F" />
-          <span className="path-vs">vs</span>
-          <TeamChip teamId={secondE} tag="2nd Pool E" />
+          <TeamChip teamId={firstF} tag="1st Pool F" out={Boolean(sf2Winner && sf2Winner !== firstF)} />
+          <span className="path-vs">vs <ScoreLine score={sf2Score} /></span>
+          <TeamChip teamId={secondE} tag="2nd Pool E" out={Boolean(sf2Winner && sf2Winner !== secondE)} />
         </div>
+      </div>
+
+      <div className="path-col path-knock">
+        <p className="path-round">Bronze</p>
+        <p className="path-sub">Semi-final losers</p>
+        <div className="path-pair">
+          <TeamChip teamId={sf1Loser} tag="SF 1 loser" out={Boolean(bronze && bronze !== sf1Loser)} />
+          <span className="path-vs">vs <ScoreLine score={scores[keys.third]} /></span>
+          <TeamChip teamId={sf2Loser} tag="SF 2 loser" out={Boolean(bronze && bronze !== sf2Loser)} />
+        </div>
+        {bronze && (
+          <>
+            <p className="path-sub" style={{ marginTop: 12 }}>Bronze medallist</p>
+            <TeamChip teamId={bronze} tag="3rd place" />
+          </>
+        )}
       </div>
 
       <div className="path-col path-knock">
         <p className="path-round">Final</p>
         <p className="path-sub">Semi winners</p>
         <div className="path-pair">
-          <TeamChip teamId={sf1Winner} tag="Winner SF 1" />
-          <span className="path-vs">vs</span>
-          <TeamChip teamId={sf2Winner} tag="Winner SF 2" />
+          <TeamChip teamId={sf1Winner} tag="Winner SF 1" out={Boolean(champion && champion !== sf1Winner)} />
+          <span className="path-vs">vs <ScoreLine score={scores[keys.final]} /></span>
+          <TeamChip teamId={sf2Winner} tag="Winner SF 2" out={Boolean(champion && champion !== sf2Winner)} />
         </div>
       </div>
 
@@ -125,9 +153,9 @@ export function PathToCup({ scores }: { scores: Record<string, MatchScore> }) {
         <div>
           <h2>To the cup</h2>
           <p className="lede">
-            Left to right: how Pools E and F finished, who they play in the semis, and who lifts the
-            little gold trophy. Blanks stay blank until that round is decided. Classification for
-            9th–16th is a different fight — this is only the road to the final.
+            Left to right: how Pools E and F finished, the semi-finals and bronze medal match,
+            then the final and the champion. Scores appear as official full-time results land.
+            Classification for 9th–16th is a different fight — this is only the road to the final.
           </p>
         </div>
       </div>

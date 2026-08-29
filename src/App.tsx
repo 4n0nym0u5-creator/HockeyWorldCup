@@ -569,7 +569,7 @@ function Schedule({
       <div className="section-head">
         <div>
           <h2>Every fixture</h2>
-          <p className="lede">Semi-finals and classification matches are locked from Pools E–H. Bronze and the final fill when the semis are done.</p>
+          <p className="lede">Semi-finals and classification matches are locked from Pools E–H. Bronze and the final are set once the semis are done.</p>
         </div>
       </div>
       <div className="filters" style={{ marginBottom: 16 }}>
