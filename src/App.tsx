@@ -24,7 +24,7 @@ import { predictionPoints, scoreboard } from "./lib/scoring";
 import { crossoverTable, poolTable, type Row } from "./lib/standings";
 import { docToState, loadState, saveState, stateToDoc, type AppState } from "./lib/storage";
 import { dayKey, formatDate, formatDateTime, matchStatus } from "./lib/time";
-import { isFullTime, isInPlay } from "./lib/scorePhase";
+import { formatScoreline, isFullTime, isInPlay } from "./lib/scorePhase";
 import { Flag, LocalNote, MatchCard, OfficialScore, TeamMark, TipCallout, WinnerCallout } from "./ui";
 import { PathToCup } from "./Path";
 
@@ -364,7 +364,7 @@ function Today({
       {lastFt && lastScore && (
         <button className="card spotlight" onClick={() => onOpen(lastFt.id)} style={{ width: "100%", textAlign: "left", marginBottom: 18 }}>
           <p className="eyebrow">Official · {formatDate(lastFt.kickoff)} · {lastFt.label}</p>
-          <h3>{lastHome?.name} {lastScore.home}–{lastScore.away} {lastAway?.name}</h3>
+          <h3>{lastHome?.name} {formatScoreline(lastScore)} {lastAway?.name}</h3>
           <p className="lede">
             Latest full-time on the board. Finished games leave Up Next, so tap through for the card.
           </p>

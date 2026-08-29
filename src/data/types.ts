@@ -62,6 +62,8 @@ export interface MatchScore {
   away: number;
   htHome?: number;
   htAway?: number;
+  soHome?: number;
+  soAway?: number;
   phase?: ScorePhase;
   source?: ScoreSource;
   status?: string;

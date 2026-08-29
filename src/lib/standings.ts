@@ -1,7 +1,7 @@
 import { matches } from "../data/matches";
 import { teamById } from "../data/teams";
 import type { Gender, MatchScore } from "../data/types";
-import { isFullTime } from "./scorePhase";
+import { decidedSide, isFullTime } from "./scorePhase";
 
 export interface Row {
   teamId: string;
@@ -101,8 +101,9 @@ export function crossoverFinished(gender: Gender, pool: "E" | "F", scores: Recor
 
 export function matchWinnerId(homeId: string, awayId: string, score?: MatchScore) {
   if (homeId === "tbd" || awayId === "tbd" || !score || !isFullTime(score)) return null;
-  if (score.home > score.away) return homeId;
-  if (score.away > score.home) return awayId;
+  const side = decidedSide(score);
+  if (side === "home") return homeId;
+  if (side === "away") return awayId;
   return null;
 }
 

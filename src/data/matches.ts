@@ -122,7 +122,7 @@ export const matches: Match[] = [
   m("m48", "M", "2026-08-28T18:30:00.000Z", "wavre", "m-ger", "m-arg", "semifinal", "Men's semi-final 2", { note: "Defending champions won Pool F. Argentina finished second in E. Hugo vs Emily." }),
 
   m("w49", "W", "2026-08-29T11:00:00.000Z", "wagener", "w-bel", "w-aus", "third", "Women's bronze medal match", { note: "Semi-final losers. Nicole vs Georgia." }),
-  m("w50", "W", "2026-08-29T14:00:00.000Z", "wagener", "w-ned", "w-arg", "final", "Women's World Cup final", { note: "Netherlands beat Belgium. Argentina beat Australia. Emily vs Nicole." }),
+  m("w50", "W", "2026-08-29T14:00:00.000Z", "wagener", "w-ned", "w-arg", "final", "Women's World Cup final", { note: "Argentina won 3–1 on shootouts after 1–1. Emily vs Nicole." }),
 
   m("m49", "M", "2026-08-30T12:00:00.000Z", "wavre", "m-ned", "m-arg", "third", "Men's bronze medal match", { note: "Semi-final losers. Spain beat Netherlands; Germany beat Argentina. Nicole vs Emily." }),
   m("m50", "M", "2026-08-30T14:30:00.000Z", "wavre", "m-esp", "m-ger", "final", "Men's World Cup final", { note: "Spain upset the Oranje; Germany defend against Los Leones. Georgia vs Hugo." }),

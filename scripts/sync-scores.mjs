@@ -55,6 +55,15 @@ function parseScoreline(value) {
   if (!value) return null;
   const text = String(value).replace(/\s+/g, " ").trim();
   if (!text || text === "-" || text === "–" || text === "v" || /upcoming/i.test(text)) return null;
+  const shootout = text.match(/(\d+)\s*[-–]\s*(\d+)\s*\(\s*(\d+)\s*[-–]\s*(\d+)\s*SO/i);
+  if (shootout) {
+    return {
+      home: Number(shootout[1]),
+      away: Number(shootout[2]),
+      soHome: Number(shootout[3]),
+      soAway: Number(shootout[4]),
+    };
+  }
   const match = text.match(/(\d+)\s*[-–]\s*(\d+)/);
   if (!match) return null;
   return { home: Number(match[1]), away: Number(match[2]) };
@@ -111,7 +120,10 @@ function parseMatchPage(html) {
 }
 
 function shouldPoll(matchId, kickoff, existing) {
-  if (existing?.source === "fih" && existing.phase === "ft") return false;
+  if (existing?.source === "fih" && existing.phase === "ft") {
+    // Knockout draws need a second look so 1-1 (1-3 SO) is not stored as a plain draw.
+    return existing.home === existing.away && existing.soHome == null;
+  }
   const start = new Date(kickoff).getTime();
   if (Number.isNaN(start)) return false;
   const now = Date.now();
@@ -127,6 +139,8 @@ function sameScore(a, b) {
     a.away === b.away &&
     a.htHome === b.htHome &&
     a.htAway === b.htAway &&
+    a.soHome === b.soHome &&
+    a.soAway === b.soAway &&
     a.phase === b.phase &&
     a.source === b.source &&
     a.status === b.status
@@ -140,6 +154,8 @@ function applyOfficial(existing, incoming) {
     away: incoming.scoreline.away,
     htHome: existing?.htHome,
     htAway: existing?.htAway,
+    soHome: incoming.scoreline.soHome ?? existing?.soHome,
+    soAway: incoming.scoreline.soAway ?? existing?.soAway,
     phase: incoming.phase,
     source: "fih",
     status: incoming.status,
@@ -277,7 +293,7 @@ async function main() {
       if (next && !sameScore(doc.scores[matchId] ?? {}, next)) {
         doc.scores[matchId] = next;
         changed += 1;
-        console.log(`${matchId} TMS ${tmsId} ${incoming.status} ${incoming.scoreline?.home}-${incoming.scoreline?.away}`);
+        console.log(`${matchId} TMS ${tmsId} ${incoming.status} ${incoming.scoreline?.home}-${incoming.scoreline?.away}${incoming.scoreline?.soHome != null ? ` SO ${incoming.scoreline.soHome}-${incoming.scoreline.soAway}` : ""}`);
       }
     } catch (error) {
       console.error(`${matchId} failed:`, error.message);

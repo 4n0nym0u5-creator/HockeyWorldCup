@@ -399,13 +399,13 @@ export const teams: Team[] = [
     color: "#f36f21",
     color2: "#111111",
     blurb:
-      "The standard. Defending world champions, four straight Pro League titles, and a points gap that looks unfair until you watch them play.",
+      "Nine-time world champions, runners-up in Amstelveen after Argentina took the 2026 final on shootouts.",
     players: [
       { name: "Yibbi Jansen", role: "Forward", note: "The most reliable goal-scorer in the women's game" },
       { name: "Xan de Waard", role: "Midfield", note: "Captain and metronome" },
     ],
     facts: [
-      "The Netherlands have won nine of fifteen women's World Cups. Nobody else has more than two.",
+      "The Netherlands have won nine women's World Cups. Argentina ended their hold on the trophy in the 2026 final.",
       "They beat Argentina 3–1 in the 2022 final in Terrassa and have barely been challenged since.",
     ],
   },
@@ -418,18 +418,18 @@ export const teams: Team[] = [
     pool: "B",
     rank: 2,
     points: 3667,
-    titles: 2,
-    best: "Champions · 2002, 2010",
+    titles: 3,
+    best: "Champions · 2002, 2010, 2026",
     color: "#74acdf",
     color2: "#ffffff",
     blurb:
-      "Las Leonas — the only side that consistently makes the Netherlands sweat. World No. 2 and a pool favourite in Wavre.",
+      "Las Leonas — 2026 world champions after beating the Netherlands 1–1, then 3–1 on shootouts, in Amstelveen.",
     players: [
       { name: "Agostina Alonso", role: "Midfield", note: "Engine and press trigger" },
       { name: "María Granatto", role: "Forward", note: "Big-game finisher" },
     ],
     facts: [
-      "Argentina have finished on the podium at seven of the last eight World Cups.",
+      "Argentina are world champions for a third time after winning the 2026 final on shootouts.",
       "They qualified by winning the 2024–25 Pro League.",
     ],
   },
@@ -443,18 +443,18 @@ export const teams: Team[] = [
     rank: 3,
     points: 3430,
     titles: 0,
-    best: "Third · 1978",
+    best: "Bronze · 2026",
     color: "#f5d76e",
     color2: "#1b1b1b",
     blurb:
-      "Red Panthers, world No. 3, hosting in Wavre. A first home World Cup and a genuine podium threat.",
+      "Red Panthers took bronze in Amstelveen, 1–0 against Australia, after a home World Cup in Wavre.",
     players: [
       { name: "Ambre Ballenghien", role: "Forward", note: "Speed on the outside" },
       { name: "Barbara Nelen", role: "Midfield", note: "Veteran leader — she even helped draw the pools" },
     ],
     facts: [
       "Eighteen-year-olds Emilie Verhees and Famke van Heel are two of only four teenagers at this World Cup.",
-      "Belgium have never reached a World Cup final. A home crowd might change the script.",
+      "Belgium took World Cup bronze in 2026, 1–0 against Australia. They have still never reached a final.",
     ],
   },
   {

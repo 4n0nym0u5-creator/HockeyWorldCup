@@ -20,7 +20,7 @@ export const members: FamilyMember[] = [
     color2: "#6b2438",
     accent: "#f0b4c4",
     emoji: "🌹",
-    tagline: "Dutch men, Indian men, and a women's spine of Argentina plus host Belgium.",
+    tagline: "Argentina women are world champions in her house, Belgium took bronze, plus Dutch and Indian men.",
     teamIds: ["m-ned", "m-ind", "m-rsa", "w-jpn", "w-arg", "w-bel"],
   },
   {
@@ -42,7 +42,7 @@ export const members: FamilyMember[] = [
     color2: "#6b4514",
     accent: "#f6d48a",
     emoji: "☀️",
-    tagline: "Kookaburras, Los Leones, Pakistan's romance, and the unbeatable Orange women.",
+    tagline: "Kookaburras, Los Leones, Pakistan's romance, and the Dutch women — silver in Amstelveen.",
     teamIds: ["m-aus", "m-arg", "m-pak", "w-ned", "w-usa", "w-eng"],
   },
   {

@@ -3,7 +3,7 @@ import { members } from "../data/members";
 import { teamById } from "../data/teams";
 import type { MemberId, Match, MatchScore, Prediction } from "../data/types";
 import { ownerOf } from "./owners";
-import { isFullTime, isProvisional, ladderScore } from "./scorePhase";
+import { decidedSide, formatScoreline, isFullTime, isProvisional, ladderScore } from "./scorePhase";
 import { poolFinished, poolTable } from "./standings";
 
 export interface ScoreLine {
@@ -39,18 +39,21 @@ export function matchOwnerPoints(match: Match, score: MatchScore, teamId: string
   const oppId = isHome ? match.awayId : match.homeId;
   const team = teamById[teamId];
   const opp = teamById[oppId];
-  let pts = resultPoints(gf, ga) + gf;
+  const side = decidedSide(score);
+  const won = (isHome && side === "home") || (!isHome && side === "away");
+  const lost = side !== "draw" && !won;
+  let pts = (won ? 3 : lost ? 0 : resultPoints(gf, ga)) + gf;
   if (ga === 0 && gf >= ga) pts += 2;
-  if (opp && team && gf > ga && team.rank > opp.rank) pts += 2;
+  if (opp && team && won && team.rank > opp.rank) pts += 2;
   const myOwner = ownerOf(teamId);
   const theirOwner = ownerOf(oppId);
-  if (myOwner && theirOwner && myOwner.id !== theirOwner.id && gf > ga) pts += 2;
+  if (myOwner && theirOwner && myOwner.id !== theirOwner.id && won) pts += 2;
   if (match.round === "semifinal") pts += 8;
   if (match.round === "final") pts += 12;
   if (match.round === "third") pts += 4;
-  if (match.round === "final" && gf > ga) pts += 20;
-  if (match.round === "third" && gf > ga) pts += 6;
-  if (match.round === "placement" && gf > ga) pts += 2;
+  if (match.round === "final" && won) pts += 20;
+  if (match.round === "third" && won) pts += 6;
+  if (match.round === "placement" && won) pts += 2;
   return pts;
 }
 
@@ -85,7 +88,7 @@ export function scoreboard(
         const pts = matchOwnerPoints(match, score, teamId);
         const team = teamById[teamId];
         const tag = isProvisional(raw) ? "HT" : "FT";
-        award(lines, `${tag} ${team?.short ?? teamId} ${score.home}–${score.away} ${match.label}`, pts);
+        award(lines, `${tag} ${team?.short ?? teamId} ${formatScoreline(score)} ${match.label}`, pts);
         teamPoints += pts;
       }
     }

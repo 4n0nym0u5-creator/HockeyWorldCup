@@ -3,7 +3,7 @@ import { teamById } from "../data/teams";
 import type { Match, MatchScore, Prediction } from "../data/types";
 import { ownerOf } from "./owners";
 import { predictionPoints } from "./scoring";
-import { isFullTime, phaseLabel } from "./scorePhase";
+import { decidedSide, hasShootout, isFullTime, phaseLabel } from "./scorePhase";
 
 export function matchOutcome(match: Match, score?: MatchScore) {
   if (!score) return null;
@@ -12,8 +12,9 @@ export function matchOutcome(match: Match, score?: MatchScore) {
   const homeOwner = ownerOf(match.homeId);
   const awayOwner = ownerOf(match.awayId);
   const finished = score.phase === "ft" || !score.phase;
+  const side = decidedSide(score);
 
-  if (score.home === score.away) {
+  if (side === "draw") {
     const shared = homeOwner && awayOwner && homeOwner.id !== awayOwner.id;
     return {
       kind: "draw" as const,
@@ -26,12 +27,19 @@ export function matchOutcome(match: Match, score?: MatchScore) {
     };
   }
 
-  const homeWins = score.home > score.away;
+  const homeWins = side === "home";
   const team = homeWins ? home : away;
   const owner = homeWins ? homeOwner : awayOwner;
   const otherOwner = homeWins ? awayOwner : homeOwner;
   const otherTeam = homeWins ? away : home;
-  const verb = finished ? "wins it" : score.phase === "ht" ? "leads at the break" : "is up";
+  const shootout = hasShootout(score) && score.home === score.away;
+  const verb = finished
+    ? shootout
+      ? "wins it on shootouts"
+      : "wins it"
+    : score.phase === "ht"
+      ? "leads at the break"
+      : "is up";
   const clash = Boolean(owner && otherOwner && owner.id !== otherOwner.id);
 
   return {

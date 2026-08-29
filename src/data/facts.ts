@@ -5,7 +5,7 @@ export const tournamentFacts = [
   "The 2026 edition dropped quarter-finals. Top two from each opening pool go into a second group stage; results against teams you already played carry over.",
   "Every team is guaranteed at least five matches. Nobody flies home after three games.",
   "Germany men are defending champions after a 3–3 final and 5–4 shootout win over Belgium in Bhubaneswar, 2023.",
-  "Netherlands women are defending champions and have won nine of the fifteen women's World Cups ever played.",
+  "Argentina women are world champions after beating the Netherlands 1–1, then 3–1 on shootouts, in Amstelveen. The Dutch had won nine of the previous fifteen World Cups.",
   "Tom Boon (Belgium) has 342 international goals and was 2025 FIH Men's Player of the Year. This may be his World Cup swansong.",
   "Matías Rey of Argentina is 41 and playing a sixth World Cup — the oldest player in either tournament.",
   "Four 18-year-olds made the festival: Belgium's Emilie Verhees and Famke van Heel, China's Luo Yaxi, and India's Sakshi Rana.",
@@ -18,9 +18,9 @@ export const tournamentFacts = [
   "The two venues sit about 220 km apart. Pool A and D live in the Netherlands; Pool B and C live in Belgium.",
   "Belgium men sit world No. 1 after winning the Pro League by a distance. They host France on opening night in Wavre.",
   "A field hockey match is four 15-minute quarters. Wins are worth three points, draws one — same as football, faster than football.",
-  "The women's final is 29 August in Amstelveen. The men's final is 30 August in Wavre.",
+  "The women's tournament is over: Argentina gold, Netherlands silver, Belgium bronze. The men's final is Spain vs Germany on 30 August in Wavre.",
   `The Family Cup prize is a little gold trophy and the right to pick ${takeawayLine}. The rest of you eat whatever comes out of the bag.`,
-  "Knockout draw: women's final is Netherlands vs Argentina (29 Aug), bronze Belgium vs Australia. Men's final is Spain vs Germany (30 Aug), bronze Netherlands vs Argentina.",
+  "Women's medals: Argentina gold, Netherlands silver, Belgium bronze (1–0 vs Australia). Men's final is Spain vs Germany; bronze Netherlands vs Argentina.",
 ];
 
 export const watchTips = [

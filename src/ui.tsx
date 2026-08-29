@@ -4,7 +4,7 @@ import { teamById } from "./data/teams";
 import type { Match, MatchNote, MatchScore, Prediction, Team } from "./data/types";
 import { matchOutcome, tipOutcome } from "./lib/outcome";
 import { ownerOf } from "./lib/owners";
-import { phaseLabel } from "./lib/scorePhase";
+import { hasShootout, phaseLabel } from "./lib/scorePhase";
 import { countdown, formatDate, formatTime, matchStatus, venueZone } from "./lib/time";
 
 export function Flag({ code, alt }: { code: string; alt: string }) {
@@ -169,6 +169,9 @@ export function OfficialScore({
       </div>
       {score.phase !== "ht" && score.htHome != null && score.htAway != null && (
         <div className="ht-line">HT {score.htHome}–{score.htAway}</div>
+      )}
+      {hasShootout(score) && (
+        <div className="ht-line">SO {score.soHome}–{score.soAway}</div>
       )}
     </div>
   );

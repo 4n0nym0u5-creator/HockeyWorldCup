@@ -24,7 +24,12 @@ export function isProvisional(score?: MatchScore) {
 export function ladderScore(score?: MatchScore) {
   if (!score) return null;
   if (score.phase === "ft" || !score.phase) {
-    return { home: score.home, away: score.away };
+    return {
+      home: score.home,
+      away: score.away,
+      soHome: score.soHome,
+      soAway: score.soAway,
+    };
   }
   if (score.phase === "ht") {
     return { home: score.htHome ?? score.home, away: score.htAway ?? score.away };
@@ -35,9 +40,29 @@ export function ladderScore(score?: MatchScore) {
   return null;
 }
 
+export function hasShootout(score?: MatchScore) {
+  return Boolean(score && Number.isFinite(score.soHome) && Number.isFinite(score.soAway));
+}
+
+/** Who won the match, including a shootout after a regulation draw. */
+export function decidedSide(score: MatchScore): "home" | "away" | "draw" {
+  if (score.home > score.away) return "home";
+  if (score.away > score.home) return "away";
+  if (hasShootout(score) && score.soHome !== score.soAway) {
+    return (score.soHome ?? 0) > (score.soAway ?? 0) ? "home" : "away";
+  }
+  return "draw";
+}
+
+export function formatScoreline(score: MatchScore) {
+  const ft = `${score.home}–${score.away}`;
+  return hasShootout(score) ? `${ft} (${score.soHome}–${score.soAway} SO)` : ft;
+}
+
 export function phaseLabel(score?: MatchScore) {
   if (!score) return "VS";
   if (score.phase === "live") return "LIVE";
   if (score.phase === "ht") return "HT";
+  if (hasShootout(score)) return "SO";
   return "FT";
 }

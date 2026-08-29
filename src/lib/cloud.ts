@@ -160,6 +160,8 @@ function normalizeScores(raw: unknown): Record<string, StampedScore> {
       away: Number(value.away),
       htHome: value.htHome == null ? undefined : Number(value.htHome),
       htAway: value.htAway == null ? undefined : Number(value.htAway),
+      soHome: value.soHome == null ? undefined : Number(value.soHome),
+      soAway: value.soAway == null ? undefined : Number(value.soAway),
       at: Number(value.at) || 0,
     };
   }
@@ -475,6 +477,13 @@ function newer(a: StampedScore, b: StampedScore) {
 
 function officialOf(phase: StampedScore["phase"], a: StampedScore, b: StampedScore) {
   const hits = [a, b].filter((score) => score.source === "fih" && score.phase === phase);
+  if (hits.length === 2 && phase === "ft") {
+    const withSo = hits.find((score) => score.soHome != null && score.soAway != null);
+    const withoutSo = hits.find((score) => score.soHome == null || score.soAway == null);
+    if (withSo && withoutSo && withSo.home === withoutSo.home && withSo.away === withoutSo.away) {
+      return withSo;
+    }
+  }
   return hits.length ? newer(hits[0], hits[hits.length - 1]) : null;
 }
 

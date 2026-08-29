@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1788029662960,
+  "updatedAt": 1788047798892,
   "scores": {
     "w01": {
       "home": 2,
@@ -108,8 +108,8 @@
       "htAway": 2,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1786884931594
+      "status": "Official",
+      "at": 1788047786309
     },
     "m06": {
       "home": 3,
@@ -188,8 +188,8 @@
       "htAway": 2,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1786971686783
+      "status": "Official",
+      "at": 1788047771773
     },
     "m10": {
       "home": 3,
@@ -328,8 +328,8 @@
       "htAway": 0,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1787133573613
+      "status": "Official",
+      "at": 1788047789062
     },
     "w18": {
       "home": 2,
@@ -418,8 +418,8 @@
       "htAway": 1,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1787222787361
+      "status": "Official",
+      "at": 1788047775221
     },
     "m22": {
       "home": 1,
@@ -448,8 +448,8 @@
       "htAway": 0,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1787237875524
+      "status": "Official",
+      "at": 1788047790174
     },
     "m23": {
       "home": 1,
@@ -528,8 +528,8 @@
       "htAway": 0,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1787324004523
+      "status": "Official",
+      "at": 1788047792449
     },
     "m27": {
       "home": 1,
@@ -538,8 +538,8 @@
       "htAway": 0,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1787344984140
+      "status": "Official",
+      "at": 1788047776270
     },
     "w28": {
       "home": 2,
@@ -658,8 +658,8 @@
       "htAway": 0,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1787484894206
+      "status": "Official",
+      "at": 1788047777540
     },
     "w34": {
       "home": 2,
@@ -788,8 +788,8 @@
       "htAway": 1,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1787593417506
+      "status": "Official",
+      "at": 1788047780238
     },
     "w40": {
       "home": 0,
@@ -798,16 +798,18 @@
       "htAway": 0,
       "phase": "ft",
       "source": "fih",
-      "status": "Complete",
-      "at": 1787602408430
+      "status": "Official",
+      "at": 1788047795421
     },
     "w46": {
       "home": 1,
       "away": 1,
+      "soHome": 0,
+      "soAway": 1,
       "phase": "ft",
       "source": "fih",
       "status": "Official",
-      "at": 1787853808828
+      "at": 1788047796674
     },
     "w47": {
       "home": 1,
@@ -876,18 +878,22 @@
     "m42": {
       "home": 2,
       "away": 2,
+      "soHome": 2,
+      "soAway": 1,
       "phase": "ft",
       "source": "fih",
       "status": "Official",
-      "at": 1787926951755
+      "at": 1788047781450
     },
     "m43": {
       "home": 4,
       "away": 4,
+      "soHome": 4,
+      "soAway": 3,
       "phase": "ft",
       "source": "fih",
       "status": "Official",
-      "at": 1787926952630
+      "at": 1788047782782
     },
     "m44": {
       "home": 6,
@@ -910,10 +916,12 @@
     "m46": {
       "home": 3,
       "away": 3,
+      "soHome": 3,
+      "soAway": 4,
       "phase": "ft",
       "source": "fih",
       "status": "Official",
-      "at": 1787960253456
+      "at": 1788047784369
     },
     "m47": {
       "home": 3,
@@ -944,10 +952,12 @@
     "w50": {
       "home": 1,
       "away": 1,
+      "soHome": 1,
+      "soAway": 3,
       "phase": "ft",
       "source": "fih",
       "status": "Official",
-      "at": 1788029662697
+      "at": 1788047797470
     }
   },
   "predictions": {

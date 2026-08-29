@@ -2,7 +2,7 @@ import { matches } from "./data/matches";
 import type { Gender, Match, MatchScore } from "./data/types";
 import { teamById } from "./data/teams";
 import { ownerOf } from "./lib/owners";
-import { isFullTime } from "./lib/scorePhase";
+import { formatScoreline, isFullTime } from "./lib/scorePhase";
 import {
   crossoverFinished,
   crossoverTable,
@@ -63,7 +63,7 @@ function TeamChip({
 
 function ScoreLine({ score }: { score?: MatchScore }) {
   if (!score || !isFullTime(score)) return null;
-  return <span className="path-score">{score.home}–{score.away}</span>;
+  return <span className="path-score">{formatScoreline(score)}</span>;
 }
 
 function GenderPath({
