@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1787993453033,
+  "updatedAt": 1788002194149,
   "scores": {
     "w01": {
       "home": 2,
@@ -930,6 +930,14 @@
       "source": "fih",
       "status": "Official",
       "at": 1787960255357
+    },
+    "w49": {
+      "home": 0,
+      "away": 0,
+      "phase": "live",
+      "source": "fih",
+      "status": "1st Quarter",
+      "at": 1788002193905
     }
   },
   "predictions": {
@@ -2769,6 +2777,22 @@
         "home": 2,
         "away": 0,
         "at": 1787993032724
+      }
+    ],
+    "m50": [
+      {
+        "memberId": "andrew",
+        "home": 0,
+        "away": 2,
+        "at": 1787994849102
+      }
+    ],
+    "m49": [
+      {
+        "memberId": "andrew",
+        "home": 2,
+        "away": 0,
+        "at": 1787994859501
       }
     ]
   },
