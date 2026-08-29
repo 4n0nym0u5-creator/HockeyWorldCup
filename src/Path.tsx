@@ -1,4 +1,5 @@
-import type { Gender, MatchScore } from "./data/types";
+import { matches } from "./data/matches";
+import type { Gender, Match, MatchScore } from "./data/types";
 import { teamById } from "./data/teams";
 import { ownerOf } from "./lib/owners";
 import { isFullTime } from "./lib/scorePhase";
@@ -14,6 +15,15 @@ const KEYS = {
   W: { sf1: "w47", sf2: "w48", third: "w49", final: "w50" },
   M: { sf1: "m47", sf2: "m48", third: "m49", final: "m50" },
 } as const;
+
+function knockoutMatch(id: string) {
+  return matches.find((match) => match.id === id);
+}
+
+function fixtureTeam(match: Match | undefined, side: "home" | "away") {
+  const id = side === "home" ? match?.homeId : match?.awayId;
+  return id && id !== "tbd" ? id : null;
+}
 
 function TeamChip({
   teamId,
@@ -64,22 +74,30 @@ function GenderPath({
   scores: Record<string, MatchScore>;
 }) {
   const keys = KEYS[gender];
+  const sf1Match = knockoutMatch(keys.sf1);
+  const sf2Match = knockoutMatch(keys.sf2);
+  const thirdMatch = knockoutMatch(keys.third);
+  const finalMatch = knockoutMatch(keys.final);
   const tableE = crossoverTable(gender, "E", scores);
   const tableF = crossoverTable(gender, "F", scores);
   const doneE = crossoverFinished(gender, "E", scores);
   const doneF = crossoverFinished(gender, "F", scores);
-  const firstE = doneE ? tableE[0]?.teamId : null;
-  const secondE = doneE ? tableE[1]?.teamId : null;
-  const firstF = doneF ? tableF[0]?.teamId : null;
-  const secondF = doneF ? tableF[1]?.teamId : null;
   const sf1Score = scores[keys.sf1];
   const sf2Score = scores[keys.sf2];
-  const sf1Winner = matchWinnerId(firstE ?? "tbd", secondF ?? "tbd", sf1Score);
-  const sf2Winner = matchWinnerId(firstF ?? "tbd", secondE ?? "tbd", sf2Score);
-  const sf1Loser = matchLoserId(firstE ?? "tbd", secondF ?? "tbd", sf1Score);
-  const sf2Loser = matchLoserId(firstF ?? "tbd", secondE ?? "tbd", sf2Score);
-  const champion = matchWinnerId(sf1Winner ?? "tbd", sf2Winner ?? "tbd", scores[keys.final]);
-  const bronze = matchWinnerId(sf1Loser ?? "tbd", sf2Loser ?? "tbd", scores[keys.third]);
+  const sf1Winner = sf1Match ? matchWinnerId(sf1Match.homeId, sf1Match.awayId, sf1Score) : null;
+  const sf2Winner = sf2Match ? matchWinnerId(sf2Match.homeId, sf2Match.awayId, sf2Score) : null;
+  const sf1Loser = sf1Match ? matchLoserId(sf1Match.homeId, sf1Match.awayId, sf1Score) : null;
+  const sf2Loser = sf2Match ? matchLoserId(sf2Match.homeId, sf2Match.awayId, sf2Score) : null;
+  const finalHome = sf1Winner ?? fixtureTeam(finalMatch, "home");
+  const finalAway = sf2Winner ?? fixtureTeam(finalMatch, "away");
+  const bronzeHome = sf1Loser ?? fixtureTeam(thirdMatch, "home");
+  const bronzeAway = sf2Loser ?? fixtureTeam(thirdMatch, "away");
+  const champion = finalMatch
+    ? matchWinnerId(finalMatch.homeId, finalMatch.awayId, scores[keys.final])
+    : matchWinnerId(finalHome ?? "tbd", finalAway ?? "tbd", scores[keys.final]);
+  const bronze = thirdMatch
+    ? matchWinnerId(thirdMatch.homeId, thirdMatch.awayId, scores[keys.third])
+    : matchWinnerId(bronzeHome ?? "tbd", bronzeAway ?? "tbd", scores[keys.third]);
 
   return (
     <div className="path-track">
@@ -99,15 +117,31 @@ function GenderPath({
         <p className="path-round">Semi-finals</p>
         <p className="path-sub">1st E vs 2nd F</p>
         <div className="path-pair">
-          <TeamChip teamId={firstE} tag="1st Pool E" out={Boolean(sf1Winner && sf1Winner !== firstE)} />
+          <TeamChip
+            teamId={fixtureTeam(sf1Match, "home")}
+            tag="SF 1 home"
+            out={Boolean(sf1Winner && sf1Winner !== fixtureTeam(sf1Match, "home"))}
+          />
           <span className="path-vs">vs <ScoreLine score={sf1Score} /></span>
-          <TeamChip teamId={secondF} tag="2nd Pool F" out={Boolean(sf1Winner && sf1Winner !== secondF)} />
+          <TeamChip
+            teamId={fixtureTeam(sf1Match, "away")}
+            tag="SF 1 away"
+            out={Boolean(sf1Winner && sf1Winner !== fixtureTeam(sf1Match, "away"))}
+          />
         </div>
         <p className="path-sub" style={{ marginTop: 18 }}>1st F vs 2nd E</p>
         <div className="path-pair">
-          <TeamChip teamId={firstF} tag="1st Pool F" out={Boolean(sf2Winner && sf2Winner !== firstF)} />
+          <TeamChip
+            teamId={fixtureTeam(sf2Match, "home")}
+            tag="SF 2 home"
+            out={Boolean(sf2Winner && sf2Winner !== fixtureTeam(sf2Match, "home"))}
+          />
           <span className="path-vs">vs <ScoreLine score={sf2Score} /></span>
-          <TeamChip teamId={secondE} tag="2nd Pool E" out={Boolean(sf2Winner && sf2Winner !== secondE)} />
+          <TeamChip
+            teamId={fixtureTeam(sf2Match, "away")}
+            tag="SF 2 away"
+            out={Boolean(sf2Winner && sf2Winner !== fixtureTeam(sf2Match, "away"))}
+          />
         </div>
       </div>
 
@@ -115,9 +149,9 @@ function GenderPath({
         <p className="path-round">Bronze</p>
         <p className="path-sub">Semi-final losers</p>
         <div className="path-pair">
-          <TeamChip teamId={sf1Loser} tag="SF 1 loser" out={Boolean(bronze && bronze !== sf1Loser)} />
+          <TeamChip teamId={bronzeHome} tag="SF 1 loser" out={Boolean(bronze && bronze !== bronzeHome)} />
           <span className="path-vs">vs <ScoreLine score={scores[keys.third]} /></span>
-          <TeamChip teamId={sf2Loser} tag="SF 2 loser" out={Boolean(bronze && bronze !== sf2Loser)} />
+          <TeamChip teamId={bronzeAway} tag="SF 2 loser" out={Boolean(bronze && bronze !== bronzeAway)} />
         </div>
         {bronze && (
           <>
@@ -131,9 +165,9 @@ function GenderPath({
         <p className="path-round">Final</p>
         <p className="path-sub">Semi winners</p>
         <div className="path-pair">
-          <TeamChip teamId={sf1Winner} tag="Winner SF 1" out={Boolean(champion && champion !== sf1Winner)} />
+          <TeamChip teamId={finalHome} tag="Winner SF 1" out={Boolean(champion && champion !== finalHome)} />
           <span className="path-vs">vs <ScoreLine score={scores[keys.final]} /></span>
-          <TeamChip teamId={sf2Winner} tag="Winner SF 2" out={Boolean(champion && champion !== sf2Winner)} />
+          <TeamChip teamId={finalAway} tag="Winner SF 2" out={Boolean(champion && champion !== finalAway)} />
         </div>
       </div>
 
